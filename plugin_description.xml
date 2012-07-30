@@ -1,0 +1,11 @@
+
+<library path="lib/libcompressed_octomap_rviz_plugin">
+  <class name="octomap_rviz_plugin/OctomapCloud"
+         type="octomap_rviz_plugin::OctomapCloudDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays point clouds generated from compressed octomap binary messages.
+    </description>
+  </class>
+</library>
+  

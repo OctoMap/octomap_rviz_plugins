@@ -135,6 +135,10 @@ void OctomapCloudDisplay::onDisable()
 
 void OctomapCloudDisplay::subscribe()
 {
+  if( !isEnabled() )
+  {
+    return;
+  }
 
   try
   {

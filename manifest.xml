@@ -1,10 +1,8 @@
 <package>
-  <description brief="RViz plugin tutorials">
-
-     Tutorials showing how to write plugins for RViz.
-
+  <description brief="octomap_rviz_plugin">
+     Renders point clouds from binary octomap messages.
   </description>
-  <author>Dave Hershberger</author>
+  <author>Julius Kammerl</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/rviz_plugin_tutorials</url>

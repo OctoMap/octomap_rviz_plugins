@@ -188,7 +188,9 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
 
   cloud_msg->point_step = offset;
 
-  cloud_msg->data.resize(octomap.getNumLeafNodes());
+  size_t numLeafs = octomap.getNumLeafNodes();
+
+  cloud_msg->data.resize(numLeafs * offset);
   cloud_msg->is_bigendian = false;
   cloud_msg->is_dense = false;
 
@@ -242,7 +244,6 @@ void OctomapCloudDisplay::unsubscribe()
 
 }
 
-
 void OctomapCloudDisplay::clear()
 {
 
@@ -250,7 +251,6 @@ void OctomapCloudDisplay::clear()
 
   pointcloud_common_->reset();
 }
-
 
 void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
 {
@@ -260,7 +260,6 @@ void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
   pointcloud_common_->update(wall_dt, ros_dt);
 
 }
-
 
 void OctomapCloudDisplay::reset()
 {
@@ -276,7 +275,6 @@ void OctomapCloudDisplay::updateTopic()
   subscribe();
   context_->queueRender();
 }
-
 
 void OctomapCloudDisplay::fixedFrameChanged()
 {

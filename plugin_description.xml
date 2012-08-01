@@ -1,5 +1,5 @@
 
-<library path="lib/libcompressed_octomap_rviz_plugin">
+<library path="lib/liboctomap_rviz_plugins">
   <class name="octomap_rviz_plugin/OctomapCloud"
          type="octomap_rviz_plugin::OctomapCloudDisplay"
          base_class_type="rviz::Display">

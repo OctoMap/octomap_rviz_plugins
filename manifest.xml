@@ -13,7 +13,7 @@
   <rosdep name="octomap" />
   <depend package="pcl_ros"/>
   <depend package="pcl"/>
-  
+
   <export>
       <rosdoc config="${prefix}/rosdoc.yaml"/>
       <rviz plugin="${prefix}/plugin_description.xml"/>

@@ -56,6 +56,8 @@ namespace octomap_rviz_plugin
   , messages_received_(0)
   , tf_filter_( 0 )
   , queue_size_(5)
+  , showVoxels_(true)
+  , do_speckle_node_test(false)
 {
 
   // Depth map properties
@@ -72,12 +74,26 @@ namespace octomap_rviz_plugin
   queue_size_property_->setMin( 1 );
 
 
+  show_voxels_property_ = new Property("Show Voxels",
+                                       showVoxels_,
+                                       "Show all occupied voxels as boxes",
+                                       this,
+                                       SLOT (updateShowVoxels() ));
+
+  speckle_node_test_property_ = new Property("Speckle Filter",
+                                             do_speckle_node_test,
+                                             "Remove points/voxels without neighbors.",
+                                             this,
+                                             SLOT (updateSpeckleNodeFilter() ));
+
   // Instantiate PointCloudCommon class for displaying point clouds
   pointcloud_common_ = new PointCloudCommon(this);
 
   // PointCloudCommon sets up a callback queue with a thread for each
   // instance.  Use that for processing incoming messages.
   update_nh_.setCallbackQueue( pointcloud_common_->getCallbackQueue() );
+
+  updateShowVoxels();
 
 }
 
@@ -108,9 +124,9 @@ OctomapCloudDisplay::~OctomapCloudDisplay()
 
   if (tf_filter_)
     delete tf_filter_;
-
-
 }
+
+
 void OctomapCloudDisplay::updateQueueSize()
 {
   queue_size_ = queue_size_property_->getInt();
@@ -168,6 +184,9 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   octomap::OcTree octomap(0.1);
   octomap::octomapMsgToMap(*msg, octomap);
 
+  // expand tree
+  octomap.expand();
+
   // output pointcloud2 message
   sensor_msgs::PointCloud2Ptr cloud_msg(new sensor_msgs::PointCloud2);
 
@@ -194,22 +213,47 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   cloud_msg->is_bigendian = false;
   cloud_msg->is_dense = false;
 
-  unsigned int m_maxTreeDepth = 16;
-
   float* cloudDataPtr = reinterpret_cast<float*>(&cloud_msg->data[0]);
   size_t pointCount = 0;
 
   // traverse all leafs in the tree:
-  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap.begin(m_maxTreeDepth), end = octomap.end(); it != end; ++it)
+  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap.begin(octomap.getTreeDepth()), end = octomap.end(); it != end; ++it)
   {
 
     if (octomap.isNodeOccupied(*it))
     {
-      *cloudDataPtr = it.getX();  ++cloudDataPtr;
-      *cloudDataPtr = it.getY();  ++cloudDataPtr;
-      *cloudDataPtr = it.getZ();  ++cloudDataPtr;
 
-      ++pointCount;
+      bool neighborFound = true;
+      if (do_speckle_node_test)
+      {
+
+        octomap::OcTreeKey key;
+        octomap::OcTreeKey nKey = it.getKey();
+
+        neighborFound = false;
+        for (key[2] = nKey[2] - 1; !neighborFound && key[2] <= nKey[2] + 1; ++key[2]){
+          for (key[1] = nKey[1] - 1; !neighborFound && key[1] <= nKey[1] + 1; ++key[1]){
+            for (key[0] = nKey[0] - 1; !neighborFound && key[0] <= nKey[0] + 1; ++key[0]){
+              if (key != nKey){
+                octomap::OcTreeNode* node = octomap.search(key);
+                if (node && octomap.isNodeOccupied(node)){
+                  // we have a neighbor => break!
+                  neighborFound = true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (neighborFound)
+      {
+        *cloudDataPtr = it.getX();  ++cloudDataPtr;
+        *cloudDataPtr = it.getY();  ++cloudDataPtr;
+        *cloudDataPtr = it.getZ();  ++cloudDataPtr;
+
+        ++pointCount;
+      }
     }
   }
 
@@ -220,6 +264,13 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   cloud_msg->height = 1;
   cloud_msg->data.resize(pointCount * cloud_msg->point_step);
   cloud_msg->row_step = cloud_msg->point_step * cloud_msg->width;
+
+  if (showVoxels_ && pointCount)
+  {
+    float size = octomap.getNodeSize(octomap.getTreeDepth());
+    pointcloud_common_->billboard_size_property_->setFloat(size);
+    pointcloud_common_->style_property_->setStringStd("Boxes");
+  }
 
   // add generated point cloud to pointcloud_common
   pointcloud_common_->addMessage(cloud_msg);
@@ -275,6 +326,31 @@ void OctomapCloudDisplay::updateTopic()
   subscribe();
   context_->queueRender();
 }
+
+void OctomapCloudDisplay::updateShowVoxels()
+{
+  showVoxels_ = show_voxels_property_->getValue().toBool();
+  if (showVoxels_)
+  {
+    point_size_tmp_ = pointcloud_common_->billboard_size_property_->getFloat();
+    point_stype_tmp_ = pointcloud_common_->style_property_->getStdString();
+    pointcloud_common_->billboard_size_property_->hide();
+    pointcloud_common_->style_property_->hide();
+  } else
+  {
+    pointcloud_common_->billboard_size_property_->setFloat(point_size_tmp_);
+    pointcloud_common_->style_property_->setStringStd(point_stype_tmp_);
+    pointcloud_common_->billboard_size_property_->show();
+    pointcloud_common_->style_property_->show();
+  }
+
+}
+
+void OctomapCloudDisplay::updateSpeckleNodeFilter()
+{
+  do_speckle_node_test = speckle_node_test_property_->getValue().toBool();
+}
+
 
 void OctomapCloudDisplay::fixedFrameChanged()
 {

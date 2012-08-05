@@ -61,6 +61,7 @@
 #include <octomap_ros/OctomapROS.h>
 #include <octomap/OcTreeKey.h>
 
+
 using namespace rviz;
 
 namespace octomap_rviz_plugin
@@ -83,11 +84,12 @@ public:
   virtual void update(float wall_dt, float ros_dt);
   virtual void reset();
 
-protected Q_SLOTS:
+private Q_SLOTS:
+  void updateShowVoxels();
   void updateQueueSize();
+  void updateTopic();
+  void updateSpeckleNodeFilter();
 
-  /** @brief Update topic and resubscribe */
-  virtual void updateTopic();
 
 protected:
 
@@ -120,7 +122,14 @@ protected:
   RosTopicProperty* octomap_topic_property_;
 
   PointCloudCommon* pointcloud_common_;
+  float point_size_tmp_;
+  std::string point_stype_tmp_;
 
+  Property* show_voxels_property_;
+  bool showVoxels_;
+
+  Property* speckle_node_test_property_;
+  bool do_speckle_node_test;
 
 };
 

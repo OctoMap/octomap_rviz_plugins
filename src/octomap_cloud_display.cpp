@@ -61,12 +61,10 @@ namespace octomap_rviz_plugin
   , do_speckle_node_test(false)
 {
 
-  // Depth map properties
-    octomap_topic_property_ = new RosTopicProperty("Compressed Octomap Topic", "",
-                                         QString::fromStdString(ros::message_traits::datatype<octomap_msgs::OctomapBinary>()),
-                                         "octomap_msgs::OctomapBinary topic to subscribe to.", this, SLOT( updateTopic() ));
+  octomap_topic_property_ = new RosTopicProperty("Compressed Octomap Topic", "",
+                                                 QString::fromStdString(ros::message_traits::datatype<octomap_msgs::OctomapBinary>()),
+                                                 "octomap_msgs::OctomapBinary topic to subscribe to.", this, SLOT( updateTopic() ));
 
-  // Queue size property
   queue_size_property_ = new IntProperty( "Queue Size", queue_size_,
                                           "Advanced: set the size of the incoming message queue.  Increasing this "
                                           "is useful if your incoming TF data is delayed significantly from your"
@@ -88,10 +86,10 @@ namespace octomap_rviz_plugin
                                              SLOT (updateSpeckleNodeFilter() ));
 
   tree_depth_property_ = new IntProperty("Max. Tree Depth",
-                                      treeDepth_,
-                                      "Defines the maximum tree depth",
-                                      this,
-                                      SLOT (updateTreeDepth() ));
+                                         treeDepth_,
+                                         "Defines the maximum tree depth",
+                                         this,
+                                            SLOT (updateTreeDepth() ));
 
   // Instantiate PointCloudCommon class for displaying point clouds
   pointcloud_common_ = new PointCloudCommon(this);

@@ -89,6 +89,7 @@ private Q_SLOTS:
   void updateQueueSize();
   void updateTopic();
   void updateSpeckleNodeFilter();
+  void updateTreeDepth();
 
 
 protected:
@@ -120,6 +121,9 @@ protected:
   u_int32_t queue_size_;
 
   RosTopicProperty* octomap_topic_property_;
+
+  IntProperty* tree_depth_property_;
+  unsigned int treeDepth_;
 
   PointCloudCommon* pointcloud_common_;
   float point_size_tmp_;

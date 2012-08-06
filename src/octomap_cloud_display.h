@@ -38,11 +38,11 @@
 #include <message_filters/subscriber.h>
 #include <tf/message_filter.h>
 
+#include "rviz/properties/bool_property.h"
+#include "rviz/properties/ros_topic_property.h"
 #include "rviz/properties/enum_property.h"
 #include "rviz/properties/float_property.h"
-#include "rviz/properties/bool_property.h"
 #include "rviz/properties/int_property.h"
-#include "rviz/properties/ros_topic_property.h"
 
 #include <rviz/display.h>
 
@@ -134,6 +134,6 @@ protected:
 };
 
 
-} // namespace depth_cloud_plugin
+} // namespace octomap_rviz_plugin
 
-#endif //RVIZ_DEPTHMAP_TO_POINTCLOUD_DISPLAY_H
+#endif //RVIZ_OCTOMAP_CLOUD_DISPLAY_H

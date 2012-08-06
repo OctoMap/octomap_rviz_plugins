@@ -357,7 +357,7 @@ void OctomapCloudDisplay::fixedFrameChanged()
   Display::reset();
 }
 
-} // namespace depth_cloud_plugin
+} // namespace octomap_rviz_plugin
 
 #include <pluginlib/class_list_macros.h>
 

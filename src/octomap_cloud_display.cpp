@@ -193,11 +193,6 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   // expand tree
   octomap.expand();
 
-  if (octomap.getTreeDepth()<treeDepth_)
-  {
-
-  }
-
   // output pointcloud2 message
   sensor_msgs::PointCloud2Ptr cloud_msg(new sensor_msgs::PointCloud2);
 
@@ -282,6 +277,8 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
     float size = octomap.getNodeSize(treeDepth);
     pointcloud_common_->billboard_size_property_->setFloat(size);
     pointcloud_common_->style_property_->setStringStd("Boxes");
+    pointcloud_common_->billboard_size_property_->hide();
+    pointcloud_common_->style_property_->hide();
   }
 
   // add generated point cloud to pointcloud_common

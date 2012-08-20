@@ -37,6 +37,10 @@
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <tf/message_filter.h>
+#include <ros/spinner.h>
+#include <ros/callback_queue.h>
+
+#include <image_geometry/pinhole_camera_model.h>
 
 #include "rviz/properties/bool_property.h"
 #include "rviz/properties/ros_topic_property.h"
@@ -46,7 +50,7 @@
 
 #include <rviz/display.h>
 
-#include <rviz/default_plugin/point_cloud_common.h>
+#include "rviz/ogre_helpers/point_cloud.h"
 
 #if ROS_VERSION_MINIMUM(1,8,0) // test for Fuerte (newer PCL)
   #include <octomap_msgs/OctomapBinary.h>
@@ -85,15 +89,12 @@ public:
   virtual void reset();
 
 private Q_SLOTS:
-  void updateShowVoxels();
   void updateQueueSize();
   void updateTopic();
-  void updateSpeckleNodeFilter();
   void updateTreeDepth();
 
 
 protected:
-
   void incomingMessageCallback(const octomap_msgs::OctomapBinaryConstPtr& msg);
 
   // overrides from Display
@@ -106,6 +107,16 @@ protected:
   void unsubscribe();
 
   void clear();
+
+  typedef std::vector<PointCloud::Point> VPoint;
+  typedef std::vector<VPoint> VVPoint;
+
+  VVPoint newPoints_;
+  double boxSizes_[16];
+  bool newPointsReceived_;
+
+  ros::AsyncSpinner spinner_;
+  ros::CallbackQueue cbqueue_;
 
   uint32_t messages_received_;
 
@@ -125,15 +136,10 @@ protected:
   IntProperty* tree_depth_property_;
   unsigned int treeDepth_;
 
-  PointCloudCommon* pointcloud_common_;
   float point_size_tmp_;
   std::string point_stype_tmp_;
 
-  Property* show_voxels_property_;
-  bool showVoxels_;
-
-  Property* speckle_node_test_property_;
-  bool do_speckle_node_test;
+  PointCloud* cloud_[16];
 
 };
 

@@ -62,7 +62,7 @@ namespace octomap_rviz_plugin
   , colorFactor_(0.8)
 {
 
-  octomap_topic_property_ = new RosTopicProperty("Compressed Octomap Topic", "",
+  octomap_topic_property_ = new RosTopicProperty("Binary Octomap Topic", "",
                                                  QString::fromStdString(ros::message_traits::datatype<octomap_msgs::OctomapBinary>()),
                                                  "octomap_msgs::OctomapBinary topic to subscribe to.", this, SLOT( updateTopic() ));
 

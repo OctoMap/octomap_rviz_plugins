@@ -80,8 +80,7 @@ namespace octomap_rviz_plugin
                                          this,
                                             SLOT (updateTreeDepth() ));
 
-
-  update_nh_.setCallbackQueue( &cbqueue_ );
+  //update_nh_.setCallbackQueue( &cbqueue_ );
 
 }
 
@@ -95,6 +94,7 @@ void OctomapCloudDisplay::onInitialize()
 
   // allocate point vectors for every tree depths
   newPoints_.resize(16);
+  pointBuf_.resize(16);
 
   for (i=0; i<16; ++i)
   {
@@ -112,6 +112,7 @@ void OctomapCloudDisplay::onInitialize()
   tf_filter_->connectInput(sub_);
   tf_filter_->registerCallback(boost::bind(&OctomapCloudDisplay::incomingMessageCallback, this, _1));
   context_->getFrameManager()->registerFilterForTransformStatusCheck(tf_filter_, this);
+
 
 }
 
@@ -170,7 +171,7 @@ void OctomapCloudDisplay::subscribe()
     if (!topicStr.empty()) {
 
       // subscribe to depth map topic
-      sub_.subscribe( update_nh_, topicStr, queue_size_ );
+      sub_.subscribe( threaded_nh_, topicStr, queue_size_ );
 
     }
   }
@@ -231,8 +232,6 @@ void setColor( double z_pos, double min_z, double max_z, double color_factor, Po
 void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBinaryConstPtr& msg )
 {
 
-  boost::mutex::scoped_lock lock(mutex_);
-
   ++messages_received_;
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
 
@@ -267,74 +266,88 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   transform = Ogre::Matrix4(orient);
   transform.setTrans(pos);
 
+
   // reset rviz pointcloud classes
   for (size_t i=0; i<16; ++i)
   {
-    newPoints_[i].clear();
+    pointBuf_[i].clear();
     boxSizes_[i] = octomap->getNodeSize(i+1);
   }
 
-  // traverse all leafs in the tree:
   size_t pointCount = 0;
-  unsigned int treeDepth = std::min<unsigned int>(treeDepth_, octomap->getTreeDepth());
-  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
   {
-
-    if (octomap->isNodeOccupied(*it))
+    // traverse all leafs in the tree:
+    unsigned int treeDepth = std::min<unsigned int>(treeDepth_, octomap->getTreeDepth());
+    for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
     {
 
-      // check if current voxel has neighbors on all sides -> no need to be displayed
-      bool allNeighborsFound = true;
-
-      octomap::OcTreeKey key;
-      octomap::OcTreeKey nKey = it.getKey();
-
-      for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
+      if (octomap->isNodeOccupied(*it))
       {
-        for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
+
+        // check if current voxel has neighbors on all sides -> no need to be displayed
+        bool allNeighborsFound = false; //DISABLED
+
+        octomap::OcTreeKey key;
+        octomap::OcTreeKey nKey = it.getKey();
+
+        for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
         {
-          for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
+          for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
           {
-            if (key != nKey)
+            for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
             {
-              octomap::OcTreeNode* node = octomap->search(key);
-              if (!(node && octomap->isNodeOccupied(node)))
+              if (key != nKey)
               {
-                // we do not have a neighbor => break!
-                allNeighborsFound = false;
+                octomap::OcTreeNode* node = octomap->search(key);
+                if (!(node && octomap->isNodeOccupied(node)))
+                {
+                  // we do not have a neighbor => break!
+                  allNeighborsFound = false;
+                }
               }
             }
           }
+
         }
 
-      }
+        if (!allNeighborsFound)
+        {
+          PointCloud::Point newPoint;
+          Ogre::Vector3 transPoint (it.getX(), it.getY(), it.getZ());
+          // transform point according to tf frame
+          transPoint = transform * transPoint;
 
-      if (!allNeighborsFound)
-      {
-        PointCloud::Point newPoint;
-        Ogre::Vector3 transPoint (it.getX(), it.getY(), it.getZ());
-        // transform point according to tf frame
-        transPoint = transform * transPoint;
+          newPoint.x = transPoint.x;
+          newPoint.y = transPoint.y;
+          newPoint.z = transPoint.z;
 
-        newPoint.x = transPoint.x;
-        newPoint.y = transPoint.y;
-        newPoint.z = transPoint.z;
+          // apply color
+          setColor(newPoint.z, minZ, maxZ, colorFactor_, newPoint);
 
-        // apply color
-        setColor(newPoint.z, minZ, maxZ, colorFactor_, newPoint);
+          // push to point vectors
+          unsigned int depth = it.getDepth();
+          pointBuf_[depth-1].push_back(newPoint);
 
-        // push to point vectors
-        unsigned int depth = it.getDepth();
-        newPoints_[depth-1].push_back(newPoint);
-
-        ++pointCount;
+          ++pointCount;
+        }
       }
     }
   }
 
   if (pointCount)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
     newPointsReceived_ = true;
 
+    for (size_t i=0; i<16; ++i)
+    {
+      newPoints_[i].clear();
+      newPoints_[i].resize(pointBuf_[i].size());
+      std::copy(pointBuf_[i].begin(), pointBuf_[i].end(), newPoints_[i].begin());
+    }
+
+  }
   delete octomap;
 }
 
@@ -364,22 +377,22 @@ void OctomapCloudDisplay::unsubscribe()
 void OctomapCloudDisplay::clear()
 {
 
+  boost::mutex::scoped_lock lock(mutex_);
+
   // reset rviz pointcloud boxes
   for (size_t i=0; i<16; ++i)
   {
     cloud_[i]->clear();
   }
 
-  boost::mutex::scoped_lock lock(mutex_);
 }
 
 void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
 {
 
+
   if (newPointsReceived_)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     for (size_t i=0; i<16; ++i)
     {
       double size = boxSizes_[i];
@@ -389,6 +402,7 @@ void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
 
       cloud_[i]->addPoints(&newPoints_[i].front(), newPoints_[i].size());
       newPoints_[i].clear();
+
     }
     newPointsReceived_ = false;
   }

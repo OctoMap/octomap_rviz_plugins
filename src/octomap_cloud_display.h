@@ -115,6 +115,7 @@ protected:
 
   // point buffer
   VVPoint newPoints_;
+  VVPoint pointBuf_;
   double boxSizes_[16];
   bool newPointsReceived_;
 

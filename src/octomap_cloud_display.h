@@ -82,6 +82,7 @@ public:
   OctomapCloudDisplay();
   virtual ~OctomapCloudDisplay();
 
+  // Initialize
   virtual void onInitialize();
 
   // Overrides from Display
@@ -89,6 +90,7 @@ public:
   virtual void reset();
 
 private Q_SLOTS:
+  // rviz property slots
   void updateQueueSize();
   void updateTopic();
   void updateTreeDepth();
@@ -111,6 +113,7 @@ protected:
   typedef std::vector<PointCloud::Point> VPoint;
   typedef std::vector<VPoint> VVPoint;
 
+  // point buffer
   VVPoint newPoints_;
   double boxSizes_[16];
   bool newPointsReceived_;
@@ -126,8 +129,11 @@ protected:
   message_filters::Subscriber<octomap_msgs::OctomapBinary> sub_;
   tf::MessageFilter<octomap_msgs::OctomapBinary>* tf_filter_;
 
+  // Ogre-rviz point clouds
   Ogre::SceneNode* pointcloud_scene_node_;
+  PointCloud* cloud_[16];
 
+  // Plugin properties
   IntProperty* queue_size_property_;
   u_int32_t queue_size_;
 
@@ -136,10 +142,7 @@ protected:
   IntProperty* tree_depth_property_;
   unsigned int treeDepth_;
 
-  float point_size_tmp_;
-  std::string point_stype_tmp_;
-
-  PointCloud* cloud_[16];
+  double colorFactor_;
 
 };
 

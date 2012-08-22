@@ -59,6 +59,7 @@ namespace octomap_rviz_plugin
   , tf_filter_( 0 )
   , queue_size_(5)
   , treeDepth_(16)
+  , colorFactor_(0.8)
 {
 
   octomap_topic_property_ = new RosTopicProperty("Compressed Octomap Topic", "",
@@ -101,7 +102,7 @@ void OctomapCloudDisplay::onInitialize()
     sname << "PointCloud Nr."<<i;
     cloud_[i] = new rviz::PointCloud();
     cloud_[i]->setName(sname.str());
-    cloud_[i]->setRenderMode( PointCloud::RM_SPHERES);//RM_BOXES );
+    cloud_[i]->setRenderMode( PointCloud::RM_BOXES );
     pointcloud_scene_node_->attachObject(cloud_[i]);
   }
 
@@ -180,6 +181,53 @@ void OctomapCloudDisplay::subscribe()
 
 }
 
+// method taken from octomap_server package
+void setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point)
+{
+  int i;
+  double m, n, f;
+
+  double s = 1.0;
+  double v = 1.0;
+
+  double h = (1.0 - std::min(std::max((z_pos-min_z)/ (max_z - min_z), 0.0), 1.0)) *color_factor;
+
+  h -= floor(h);
+  h *= 6;
+  i = floor(h);
+  f = h - i;
+  if (!(i & 1))
+    f = 1 - f; // if i is even
+  m = v * (1 - s);
+  n = v * (1 - s * f);
+
+  switch (i) {
+    case 6:
+    case 0:
+      point.setColor(v, n, m);
+      break;
+    case 1:
+      point.setColor(n, v, m);
+      break;
+    case 2:
+      point.setColor(m, v, n);
+      break;
+    case 3:
+      point.setColor(m, n, v);
+      break;
+    case 4:
+      point.setColor(n, m, v);
+      break;
+    case 5:
+      point.setColor(v, m, n);
+      break;
+    default:
+      point.setColor(1, 0.5, 0.5);
+      break;
+  }
+}
+
+
 void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBinaryConstPtr& msg )
 {
 
@@ -189,12 +237,22 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
 
   // creating octree from OctomapBinary message
-  octomap::OcTree octomap(0.1);
-  octomap::octomapMsgToMap(*msg, octomap);
+  octomap::OcTree* octomap = NULL;
+  octomap = octomap_msgs::binaryMsgDataToMap(msg->data);
 
-  // expand tree
-  //octomap.expand();
+  if (!octomap)
+  {
+    this->setStatusStd(StatusProperty::Error, "Message", "Failed to create octree structure");
+    return;
+  }
 
+  // get dimensions of octree
+  double minX, minY, minZ, maxX, maxY, maxZ;
+  octomap->getMetricMin(minX, minY, minZ);
+  octomap->getMetricMax(maxX, maxY, maxZ);
+
+
+  // get tf transform
   Ogre::Matrix4 transform = Ogre::Matrix4::ZERO;
   Ogre::Vector3 pos;
   Ogre::Quaternion orient;
@@ -206,33 +264,26 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
     this->setStatusStd(StatusProperty::Error, "Message", ss.str());
     return;
   }
-
   transform = Ogre::Matrix4(orient);
   transform.setTrans(pos);
 
-
-  size_t numLeafs = octomap.getNumLeafNodes();
-
-  size_t pointCount = 0;
-  unsigned int treeDepth = std::min<unsigned int>(treeDepth_, octomap.getTreeDepth());
-
-  // reset rviz pointcloud boxes
+  // reset rviz pointcloud classes
   for (size_t i=0; i<16; ++i)
   {
     newPoints_[i].clear();
-    boxSizes_[i] = octomap.getNodeSize(i+1);
+    boxSizes_[i] = octomap->getNodeSize(i+1);
   }
 
-  double minPosY_ = pos.y -  octomap.getNodeSize(0) / 2;
-  double treeHeight = octomap.getNodeSize(0);
-
   // traverse all leafs in the tree:
-  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap.begin(treeDepth), end = octomap.end(); it != end; ++it)
+  size_t pointCount = 0;
+  unsigned int treeDepth = std::min<unsigned int>(treeDepth_, octomap->getTreeDepth());
+  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
   {
 
-    if (octomap.isNodeOccupied(*it))
+    if (octomap->isNodeOccupied(*it))
     {
 
+      // check if current voxel has neighbors on all sides -> no need to be displayed
       bool allNeighborsFound = true;
 
       octomap::OcTreeKey key;
@@ -246,10 +297,10 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
           {
             if (key != nKey)
             {
-              octomap::OcTreeNode* node = octomap.search(key);
-              if (node && !octomap.isNodeOccupied(node))
+              octomap::OcTreeNode* node = octomap->search(key);
+              if (!(node && octomap->isNodeOccupied(node)))
               {
-                // we have a neighbor => break!
+                // we do not have a neighbor => break!
                 allNeighborsFound = false;
               }
             }
@@ -262,14 +313,17 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
       {
         PointCloud::Point newPoint;
         Ogre::Vector3 transPoint (it.getX(), it.getY(), it.getZ());
+        // transform point according to tf frame
         transPoint = transform * transPoint;
 
         newPoint.x = transPoint.x;
         newPoint.y = transPoint.y;
         newPoint.z = transPoint.z;
 
-        newPoint.color = 0xFFFFFF;
+        // apply color
+        setColor(newPoint.z, minZ, maxZ, colorFactor_, newPoint);
 
+        // push to point vectors
         unsigned int depth = it.getDepth();
         newPoints_[depth-1].push_back(newPoint);
 
@@ -278,11 +332,10 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
     }
   }
 
-  ////////////////////////////////////////////////
-  // finalize pointcloud2 message
-  ////////////////////////////////////////////////
   if (pointCount)
     newPointsReceived_ = true;
+
+  delete octomap;
 }
 
 void OctomapCloudDisplay::updateTreeDepth()

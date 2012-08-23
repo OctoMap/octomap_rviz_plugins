@@ -65,6 +65,7 @@
 #include <octomap_ros/OctomapROS.h>
 #include <octomap/OcTreeKey.h>
 
+#include <QList>
 
 using namespace rviz;
 
@@ -99,6 +100,8 @@ private Q_SLOTS:
 protected:
   void incomingMessageCallback(const octomap_msgs::OctomapBinaryConstPtr& msg);
 
+  void setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point);
+
   // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
@@ -110,6 +113,21 @@ protected:
 
   void clear();
 
+  // thread-safe status updates
+  // add status update to global status list
+  void updateStatus( StatusProperty::Level level, const QString& name, const QString& text );
+
+  // use global status list to update rviz plugin status
+  void setStatusList( );
+
+  boost::mutex status_mutex_;
+  struct StatusListEntry {
+    StatusProperty::Level level;
+    QString name;
+    QString text;
+  };
+  QList<StatusListEntry> statusList_;
+
   typedef std::vector<PointCloud::Point> VPoint;
   typedef std::vector<VPoint> VVPoint;
 
@@ -118,9 +136,6 @@ protected:
   VVPoint pointBuf_;
   double boxSizes_[16];
   bool newPointsReceived_;
-
-  ros::AsyncSpinner spinner_;
-  ros::CallbackQueue cbqueue_;
 
   uint32_t messages_received_;
 
@@ -144,7 +159,6 @@ protected:
   unsigned int treeDepth_;
 
   double colorFactor_;
-
 };
 
 

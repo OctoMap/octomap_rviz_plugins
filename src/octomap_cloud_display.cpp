@@ -54,7 +54,6 @@ namespace octomap_rviz_plugin
   OctomapCloudDisplay::OctomapCloudDisplay()
   : rviz::Display()
   , newPointsReceived_ (false)
-  , spinner_(1, &cbqueue_)
   , messages_received_(0)
   , tf_filter_( 0 )
   , queue_size_(5)
@@ -79,8 +78,6 @@ namespace octomap_rviz_plugin
                                          "Defines the maximum tree depth",
                                          this,
                                             SLOT (updateTreeDepth() ));
-
-  //update_nh_.setCallbackQueue( &cbqueue_ );
 
 }
 
@@ -107,7 +104,7 @@ void OctomapCloudDisplay::onInitialize()
   }
 
   tf_filter_ = new tf::MessageFilter<octomap_msgs::OctomapBinary>( *context_->getTFClient(), fixed_frame_.toStdString(),
-                                                                       queue_size_property_->getInt(), update_nh_ );
+                                                                       queue_size_property_->getInt(), threaded_nh_ );
 
   tf_filter_->connectInput(sub_);
   tf_filter_->registerCallback(boost::bind(&OctomapCloudDisplay::incomingMessageCallback, this, _1));
@@ -164,8 +161,6 @@ void OctomapCloudDisplay::subscribe()
 
   try
   {
-    boost::mutex::scoped_lock lock(mutex_);
-
     std::string topicStr = octomap_topic_property_->getStdString();
 
     if (!topicStr.empty()) {
@@ -177,13 +172,57 @@ void OctomapCloudDisplay::subscribe()
   }
   catch (ros::Exception& e)
   {
-    setStatus( StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
+    updateStatus( StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
   }
 
 }
 
+void OctomapCloudDisplay::unsubscribe()
+{
+  clear();
+
+  try
+  {
+    // reset filters
+    sub_.unsubscribe( );
+  }
+  catch (ros::Exception& e)
+  {
+    updateStatus( StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
+  }
+
+}
+
+void OctomapCloudDisplay::setStatusList( )
+{
+  boost::mutex::scoped_lock lock(status_mutex_);
+
+  QList<StatusListEntry>::iterator i;
+  QList<StatusListEntry>::iterator i_end = statusList_.end();
+
+  for (i = statusList_.begin(); i != i_end; ++i)
+  {
+    setStatus(i->level, i->name, i->text);
+  }
+
+  statusList_.clear();
+}
+
+void OctomapCloudDisplay::updateStatus( StatusProperty::Level level, const QString& name, const QString& text )
+{
+  boost::mutex::scoped_lock lock(status_mutex_);
+
+  StatusListEntry newQueueEntry;
+
+  newQueueEntry.level = level;
+  newQueueEntry.name = name;
+  newQueueEntry.text = text;
+
+  statusList_.push_back(newQueueEntry);
+}
+
 // method taken from octomap_server package
-void setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point)
+void OctomapCloudDisplay::setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point)
 {
   int i;
   double m, n, f;
@@ -231,9 +270,8 @@ void setColor( double z_pos, double min_z, double max_z, double color_factor, Po
 
 void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBinaryConstPtr& msg )
 {
-
   ++messages_received_;
-  setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
+  updateStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
 
   // creating octree from OctomapBinary message
   octomap::OcTree* octomap = NULL;
@@ -266,7 +304,6 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   transform = Ogre::Matrix4(orient);
   transform.setTrans(pos);
 
-
   // reset rviz pointcloud classes
   for (size_t i=0; i<16; ++i)
   {
@@ -285,7 +322,7 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
       {
 
         // check if current voxel has neighbors on all sides -> no need to be displayed
-        bool allNeighborsFound = false; //DISABLED
+        bool allNeighborsFound = true;
 
         octomap::OcTreeKey key;
         octomap::OcTreeKey nKey = it.getKey();
@@ -356,24 +393,6 @@ void OctomapCloudDisplay::updateTreeDepth()
   treeDepth_ = tree_depth_property_->getInt();
 }
 
-void OctomapCloudDisplay::unsubscribe()
-{
-  clear();
-
-  boost::mutex::scoped_lock lock(mutex_);
-
-  try
-  {
-    // reset filters
-    sub_.unsubscribe( );
-  }
-  catch (ros::Exception& e)
-  {
-    setStatus( StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
-  }
-
-}
-
 void OctomapCloudDisplay::clear()
 {
 
@@ -391,8 +410,12 @@ void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
 {
 
 
+
+
   if (newPointsReceived_)
   {
+    boost::mutex::scoped_lock lock(mutex_);
+
     for (size_t i=0; i<16; ++i)
     {
       double size = boxSizes_[i];
@@ -407,13 +430,14 @@ void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
     newPointsReceived_ = false;
   }
 
+  setStatusList();
 }
 
 void OctomapCloudDisplay::reset()
 {
   clear();
   messages_received_ = 0;
-  setStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
+  updateStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
 }
 
 void OctomapCloudDisplay::updateTopic()

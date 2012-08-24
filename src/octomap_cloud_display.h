@@ -121,12 +121,11 @@ protected:
   void setStatusList( );
 
   boost::mutex status_mutex_;
-  struct StatusListEntry {
+  struct StatusMapEntry {
     StatusProperty::Level level;
-    QString name;
     QString text;
   };
-  QList<StatusListEntry> statusList_;
+  QMap<QString, StatusMapEntry> statusMap_;
 
   typedef std::vector<PointCloud::Point> VPoint;
   typedef std::vector<VPoint> VVPoint;

@@ -197,28 +197,25 @@ void OctomapCloudDisplay::setStatusList( )
 {
   boost::mutex::scoped_lock lock(status_mutex_);
 
-  QList<StatusListEntry>::iterator i;
-  QList<StatusListEntry>::iterator i_end = statusList_.end();
-
-  for (i = statusList_.begin(); i != i_end; ++i)
-  {
-    setStatus(i->level, i->name, i->text);
+  QMap<QString, StatusMapEntry>::const_iterator i = statusMap_.constBegin();
+  while (i != statusMap_.constEnd()) {
+    setStatus(i->level, i.key(), i->text);
+      ++i;
   }
 
-  statusList_.clear();
+  statusMap_.clear();
 }
 
 void OctomapCloudDisplay::updateStatus( StatusProperty::Level level, const QString& name, const QString& text )
 {
   boost::mutex::scoped_lock lock(status_mutex_);
 
-  StatusListEntry newQueueEntry;
+  StatusMapEntry newMapEntry;
 
-  newQueueEntry.level = level;
-  newQueueEntry.name = name;
-  newQueueEntry.text = text;
+  newMapEntry.level = level;
+  newMapEntry.text = text;
 
-  statusList_.push_back(newQueueEntry);
+  statusMap_[name] = newMapEntry;
 }
 
 // method taken from octomap_server package

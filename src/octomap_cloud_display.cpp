@@ -172,7 +172,7 @@ void OctomapCloudDisplay::subscribe()
   }
   catch (ros::Exception& e)
   {
-    updateStatus( StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
+    setStatus( StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
   }
 
 }
@@ -188,35 +188,11 @@ void OctomapCloudDisplay::unsubscribe()
   }
   catch (ros::Exception& e)
   {
-    updateStatus( StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
+    setStatus( StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
   }
 
 }
 
-void OctomapCloudDisplay::setStatusList( )
-{
-  boost::mutex::scoped_lock lock(status_mutex_);
-
-  QMap<QString, StatusMapEntry>::const_iterator i = statusMap_.constBegin();
-  while (i != statusMap_.constEnd()) {
-    setStatus(i->level, i.key(), i->text);
-      ++i;
-  }
-
-  statusMap_.clear();
-}
-
-void OctomapCloudDisplay::updateStatus( StatusProperty::Level level, const QString& name, const QString& text )
-{
-  boost::mutex::scoped_lock lock(status_mutex_);
-
-  StatusMapEntry newMapEntry;
-
-  newMapEntry.level = level;
-  newMapEntry.text = text;
-
-  statusMap_[name] = newMapEntry;
-}
 
 // method taken from octomap_server package
 void OctomapCloudDisplay::setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point)
@@ -268,7 +244,7 @@ void OctomapCloudDisplay::setColor( double z_pos, double min_z, double max_z, do
 void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBinaryConstPtr& msg )
 {
   ++messages_received_;
-  updateStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
+  setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
 
   // creating octree from OctomapBinary message
   octomap::OcTree* octomap = NULL;
@@ -405,10 +381,6 @@ void OctomapCloudDisplay::clear()
 
 void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
 {
-
-
-
-
   if (newPointsReceived_)
   {
     boost::mutex::scoped_lock lock(mutex_);
@@ -426,15 +398,13 @@ void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
     }
     newPointsReceived_ = false;
   }
-
-  setStatusList();
 }
 
 void OctomapCloudDisplay::reset()
 {
   clear();
   messages_received_ = 0;
-  updateStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
+  setStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
 }
 
 void OctomapCloudDisplay::updateTopic()

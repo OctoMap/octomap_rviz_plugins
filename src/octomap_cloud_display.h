@@ -65,8 +65,6 @@
 #include <octomap_ros/OctomapROS.h>
 #include <octomap/OcTreeKey.h>
 
-#include <QList>
-
 using namespace rviz;
 
 namespace octomap_rviz_plugin
@@ -112,20 +110,6 @@ protected:
   void unsubscribe();
 
   void clear();
-
-  // thread-safe status updates
-  // add status update to global status list
-  void updateStatus( StatusProperty::Level level, const QString& name, const QString& text );
-
-  // use global status list to update rviz plugin status
-  void setStatusList( );
-
-  boost::mutex status_mutex_;
-  struct StatusMapEntry {
-    StatusProperty::Level level;
-    QString text;
-  };
-  QMap<QString, StatusMapEntry> statusMap_;
 
   typedef std::vector<PointCloud::Point> VPoint;
   typedef std::vector<VPoint> VVPoint;

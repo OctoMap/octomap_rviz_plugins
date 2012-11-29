@@ -28,7 +28,7 @@
  */
 #include <QObject>
 
-#include "octomap_cloud_display.h"
+#include "occupancy_grid_display.h"
 
 #include "rviz/visualization_manager.h"
 #include "rviz/properties/property.h"
@@ -51,7 +51,7 @@ using namespace rviz;
 namespace octomap_rviz_plugin
 {
 
-  OctomapCloudDisplay::OctomapCloudDisplay()
+  OccupancyGridDisplay::OccupancyGridDisplay()
   : rviz::Display()
   , newPointsReceived_ (false)
   , messages_received_(0)
@@ -73,7 +73,7 @@ namespace octomap_rviz_plugin
   queue_size_property_->setMin( 1 );
 
 
-  tree_depth_property_ = new IntProperty("Max. Tree Depth",
+  tree_depth_property_ = new IntProperty("Max. Octree Depth",
                                          treeDepth_,
                                          "Defines the maximum tree depth",
                                          this,
@@ -81,13 +81,10 @@ namespace octomap_rviz_plugin
 
 }
 
-void OctomapCloudDisplay::onInitialize()
+void OccupancyGridDisplay::onInitialize()
 {
 
   int i;
-
-  pointcloud_scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
-  pointcloud_scene_node_->setVisible( true );
 
   // allocate point vectors for every tree depths
   newPoints_.resize(16);
@@ -100,28 +97,29 @@ void OctomapCloudDisplay::onInitialize()
     cloud_[i] = new rviz::PointCloud();
     cloud_[i]->setName(sname.str());
     cloud_[i]->setRenderMode( PointCloud::RM_BOXES );
-    pointcloud_scene_node_->attachObject(cloud_[i]);
+    scene_node_->attachObject(cloud_[i]);
   }
 
   tf_filter_ = new tf::MessageFilter<octomap_msgs::OctomapBinary>( *context_->getTFClient(), fixed_frame_.toStdString(),
                                                                        queue_size_property_->getInt(), threaded_nh_ );
 
   tf_filter_->connectInput(sub_);
-  tf_filter_->registerCallback(boost::bind(&OctomapCloudDisplay::incomingMessageCallback, this, _1));
+  tf_filter_->registerCallback(boost::bind(&OccupancyGridDisplay::incomingMessageCallback, this, _1));
   context_->getFrameManager()->registerFilterForTransformStatusCheck(tf_filter_, this);
 
 
 }
 
-OctomapCloudDisplay::~OctomapCloudDisplay()
+OccupancyGridDisplay::~OccupancyGridDisplay()
 {
   size_t i;
 
   unsubscribe();
 
+  scene_node_->detachAllObjects();
+
   for (i=0; i<16; ++i)
   {
-    pointcloud_scene_node_->detachAllObjects();
     delete cloud_[i];
   }
 
@@ -130,7 +128,7 @@ OctomapCloudDisplay::~OctomapCloudDisplay()
 }
 
 
-void OctomapCloudDisplay::updateQueueSize()
+void OccupancyGridDisplay::updateQueueSize()
 {
   queue_size_ = queue_size_property_->getInt();
 
@@ -138,21 +136,21 @@ void OctomapCloudDisplay::updateQueueSize()
     tf_filter_->setQueueSize(queue_size_);
 }
 
-void OctomapCloudDisplay::onEnable()
+void OccupancyGridDisplay::onEnable()
 {
-  pointcloud_scene_node_->setVisible( true );
+  scene_node_->setVisible( true );
   subscribe();
 }
 
-void OctomapCloudDisplay::onDisable()
+void OccupancyGridDisplay::onDisable()
 {
-  pointcloud_scene_node_->setVisible( false );
+  scene_node_->setVisible( false );
   unsubscribe();
 
   clear();
 }
 
-void OctomapCloudDisplay::subscribe()
+void OccupancyGridDisplay::subscribe()
 {
   if( !isEnabled() )
   {
@@ -177,7 +175,7 @@ void OctomapCloudDisplay::subscribe()
 
 }
 
-void OctomapCloudDisplay::unsubscribe()
+void OccupancyGridDisplay::unsubscribe()
 {
   clear();
 
@@ -195,7 +193,7 @@ void OctomapCloudDisplay::unsubscribe()
 
 
 // method taken from octomap_server package
-void OctomapCloudDisplay::setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point)
+void OccupancyGridDisplay::setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point)
 {
   int i;
   double m, n, f;
@@ -241,10 +239,12 @@ void OctomapCloudDisplay::setColor( double z_pos, double min_z, double max_z, do
 }
 
 
-void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBinaryConstPtr& msg )
+void OccupancyGridDisplay::incomingMessageCallback( const octomap_msgs::OctomapBinaryConstPtr& msg )
 {
   ++messages_received_;
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
+
+  ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
   // creating octree from OctomapBinary message
   octomap::OcTree* octomap = NULL;
@@ -263,7 +263,6 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
 
 
   // get tf transform
-  Ogre::Matrix4 transform = Ogre::Matrix4::ZERO;
   Ogre::Vector3 pos;
   Ogre::Quaternion orient;
   if (!context_->getFrameManager()->getTransform(msg->header, pos, orient))
@@ -274,8 +273,9 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
     this->setStatusStd(StatusProperty::Error, "Message", ss.str());
     return;
   }
-  transform = Ogre::Matrix4(orient);
-  transform.setTrans(pos);
+
+  scene_node_->setOrientation(orient);
+  scene_node_->setPosition(pos);
 
   // reset rviz pointcloud classes
   for (size_t i=0; i<16; ++i)
@@ -323,13 +323,10 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
         if (!allNeighborsFound)
         {
           PointCloud::Point newPoint;
-          Ogre::Vector3 transPoint (it.getX(), it.getY(), it.getZ());
-          // transform point according to tf frame
-          transPoint = transform * transPoint;
 
-          newPoint.x = transPoint.x;
-          newPoint.y = transPoint.y;
-          newPoint.z = transPoint.z;
+          newPoint.x = it.getX();
+          newPoint.y = it.getY();
+          newPoint.z = it.getZ();
 
           // apply color
           setColor(newPoint.z, minZ, maxZ, colorFactor_, newPoint);
@@ -361,12 +358,12 @@ void OctomapCloudDisplay::incomingMessageCallback( const octomap_msgs::OctomapBi
   delete octomap;
 }
 
-void OctomapCloudDisplay::updateTreeDepth()
+void OccupancyGridDisplay::updateTreeDepth()
 {
   treeDepth_ = tree_depth_property_->getInt();
 }
 
-void OctomapCloudDisplay::clear()
+void OccupancyGridDisplay::clear()
 {
 
   boost::mutex::scoped_lock lock(mutex_);
@@ -379,7 +376,7 @@ void OctomapCloudDisplay::clear()
 
 }
 
-void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
+void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
 {
   if (newPointsReceived_)
   {
@@ -400,14 +397,14 @@ void OctomapCloudDisplay::update(float wall_dt, float ros_dt)
   }
 }
 
-void OctomapCloudDisplay::reset()
+void OccupancyGridDisplay::reset()
 {
   clear();
   messages_received_ = 0;
   setStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
 }
 
-void OctomapCloudDisplay::updateTopic()
+void OccupancyGridDisplay::updateTopic()
 {
   unsubscribe();
   reset();
@@ -416,7 +413,7 @@ void OctomapCloudDisplay::updateTopic()
 }
 
 
-void OctomapCloudDisplay::fixedFrameChanged()
+void OccupancyGridDisplay::fixedFrameChanged()
 {
   Display::reset();
 }
@@ -425,5 +422,5 @@ void OctomapCloudDisplay::fixedFrameChanged()
 
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_DECLARE_CLASS( octomap_rviz_plugin, OctomapCloud, octomap_rviz_plugin::OctomapCloudDisplay, rviz::Display)
+PLUGINLIB_DECLARE_CLASS( octomap_rviz_plugin, OccupancyGrid, octomap_rviz_plugin::OccupancyGridDisplay, rviz::Display)
 

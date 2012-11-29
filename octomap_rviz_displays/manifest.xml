@@ -1,6 +1,6 @@
 <package>
-  <description brief="octomap_rviz_plugin">
-     Shows an occupancy grid rendered from binary octomap messages.
+  <description brief="octomap_rviz_displays">
+     Displays occupancy information decoded from binary octomap messages.
   </description>
   <author>Julius Kammerl</author>
   <license>BSD</license>

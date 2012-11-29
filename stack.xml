@@ -1,0 +1,16 @@
+<stack>
+  <description brief="Plugins for decoding binary octomap messages in rviz">
+    A set of plugins for displaying occupancy information decoded from binary
+    octomap messages. 
+  </description>
+  <author>Julius Kammerl</author>
+  <license>BSD</license>  
+  <review status="Doc unreviewed" notes=""/>
+  <url>http://ros.org/wiki/octomap_rviz_plugins</url>
+
+  <depend stack="ros"/>   
+  <depend stack="ros_comm"/>
+  <depend stack="octomap_mapping" />
+  <depend stack="visualization"/>          
+
+</stack>

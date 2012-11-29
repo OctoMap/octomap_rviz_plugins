@@ -324,12 +324,12 @@ void OccupancyGridDisplay::incomingMessageCallback( const octomap_msgs::OctomapB
         {
           PointCloud::Point newPoint;
 
-          newPoint.x = it.getX();
-          newPoint.y = it.getY();
-          newPoint.z = it.getZ();
+          newPoint.position.x = it.getX();
+          newPoint.position.y = it.getY();
+          newPoint.position.z = it.getZ();
 
           // apply color
-          setColor(newPoint.z, minZ, maxZ, colorFactor_, newPoint);
+          setColor(newPoint.position.z, minZ, maxZ, colorFactor_, newPoint);
 
           // push to point vectors
           unsigned int depth = it.getDepth();

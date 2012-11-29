@@ -11,7 +11,7 @@
   <depend package="std_srvs"/>
   <rosdep name="octomap" />
   <depend package="octomap_ros"/>
-
+ <depend package="image_geometry"/>
   <export>
       <rosdoc config="${prefix}/rosdoc.yaml"/>
       <rviz plugin="${prefix}/plugin_description.xml"/>

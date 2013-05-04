@@ -13,19 +13,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>image_geometry</build_depend>
+  <build_depend>octomap_msgs</build_depend>
   <build_depend>octomap</build_depend>
-  <build_depend>octomap_ros</build_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>std_srvs</build_depend>
+  <build_depend>rviz</build_depend>
  
-  <run_depend>image_geometry</run_depend>
+  <run_depend>octomap_msgs</run_depend>
   <run_depend>octomap</run_depend>
-  <run_depend>octomap_ros</run_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>std_srvs</run_depend>
+  <run_depend>rviz</run_depend>
 
   <export>
     <rviz plugin="${prefix}/plugin_description.xml"/>

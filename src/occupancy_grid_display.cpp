@@ -45,10 +45,9 @@
 #include "rviz/properties/ros_topic_property.h"
 #include "rviz/properties/enum_property.h"
 
-#include <octomap_msgs/Octomap.h>
 #include <octomap/octomap.h>
+#include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
-#include <octomap_ros/OctomapROS.h>
 
 #include <sstream>
 
@@ -316,7 +315,7 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   {
     // traverse all leafs in the tree:
     unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
-    for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+    for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
     {
 
       if (octomap->isNodeOccupied(*it))

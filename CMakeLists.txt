@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(octomap_rviz_plugins)
 
-find_package(catkin REQUIRED COMPONENTS image_geometry
-                                        octomap_ros
+find_package(catkin REQUIRED COMPONENTS octomap_msgs
                                         roscpp
-                                        std_msgs
-                                        std_srvs
+                                        rviz
                                         
 )
 
@@ -20,11 +18,9 @@ add_definitions(-DQT_NO_KEYWORDS)
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS image_geometry
-                   octomap_ros
+    CATKIN_DEPENDS octomap_msgs
                    roscpp
-                   std_msgs
-                   std_srvs
+                   rviz
     DEPENDS octomap
 )
                                         

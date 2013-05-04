@@ -37,10 +37,9 @@
 #include "rviz/properties/int_property.h"
 #include "rviz/properties/ros_topic_property.h"
 
-#include <octomap_msgs/Octomap.h>
 #include <octomap/octomap.h>
+#include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
-#include <octomap_ros/OctomapROS.h>
 
 using namespace rviz;
 
@@ -155,8 +154,7 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 
   unsigned int tree_depth = octomap->getTreeDepth();
 
-  octomap::OcTreeKey paddedMinKey;
-  octomap->genKey(minPt, paddedMinKey);
+  octomap::OcTreeKey paddedMinKey = octomap->coordToKey(minPt);
 
   nav_msgs::OccupancyGrid::Ptr occupancy_map (new nav_msgs::OccupancyGrid());
 
@@ -177,7 +175,7 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 
     // traverse all leafs in the tree:
   unsigned int treeDepth = std::min<unsigned int>(octree_depth_, octomap->getTreeDepth());
-  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+  for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
   {
     bool occupied = octomap->isNodeOccupied(*it);
     int intSize = 1 << (octree_depth_ - it.getDepth());

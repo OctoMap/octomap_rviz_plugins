@@ -1,17 +1,70 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(octomap_rviz_plugins)
 
-# Append to CPACK_SOURCE_IGNORE_FILES a semicolon-separated list of
-# directories (or patterns, but directories should suffice) that should
-# be excluded from the distro.  This is not the place to put things that
-# should be ignored everywhere, like "build" directories; that happens in
-# rosbuild/rosbuild.cmake.  Here should be listed packages that aren't
-# ready for inclusion in a distro.
-#
-# This list is combined with the list in rosbuild/rosbuild.cmake.  Note
-# that CMake 2.6 may be required to ensure that the two lists are combined
-# properly.  CMake 2.4 seems to have unpredictable scoping rules for such
-# variables.
-#list(APPEND CPACK_SOURCE_IGNORE_FILES /core/experimental)
+find_package(catkin REQUIRED COMPONENTS image_geometry
+                                        octomap_ros
+                                        roscpp
+                                        std_msgs
+                                        std_srvs
+                                        
+)
 
-rosbuild_make_distribution(0.0.1)
+find_package(octomap REQUIRED)
+find_package(Boost REQUIRED COMPONENTS thread )
+
+find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+include(${QT_USE_FILE})
+
+add_definitions(-DQT_NO_KEYWORDS)
+
+catkin_package(
+    INCLUDE_DIRS include
+    LIBRARIES ${PROJECT_NAME}
+    CATKIN_DEPENDS image_geometry
+                   octomap_ros
+                   roscpp
+                   std_msgs
+                   std_srvs
+    DEPENDS octomap
+)
+                                        
+
+include_directories(include 
+                    ${catkin_INCLUDE_DIRS} 
+                    ${Boost_INCLUDE_DIRS} 
+                    ${octomap_INCLUDE_DIRS})
+
+link_directories(${catkin_LIBRARY_DIRS}
+                 ${Boost_LIBRARY_DIRS}
+                 ${octomap_LIBRARY_DIRS}) 
+
+
+qt4_wrap_cpp(MOC_FILES
+  include/octomap_rviz_plugins/occupancy_grid_display.h
+  include/octomap_rviz_plugins/occupancy_map_display.h
+)
+
+set(SOURCE_FILES
+  src/occupancy_grid_display.cpp
+  src/occupancy_map_display.cpp
+  ${MOC_FILES} 
+)
+
+add_library(${PROJECT_NAME} ${SOURCE_FILES})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${octomap_LIBRARIES} ${catkin_LIBRARIES} -ldefault_plugin)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES plugin_description.xml
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+

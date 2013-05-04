@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Willow Garage, Inc.
+ * Copyright (c) 2013, Willow Garage, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,40 +25,28 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: Julius Kammerl (jkammerl@willowgarage.com)
+ *
  */
 
 #ifndef RVIZ_OCCUPANCY_MAP_DISPLAY_H
 #define RVIZ_OCCUPANCY_MAP_DISPLAY_H
 
 #include <qobject.h>
-#include "rviz/default_plugin/map_display.h"
-
-#if ROS_VERSION_MINIMUM(1,8,0) // test for Fuerte (newer PCL)
-  #include <octomap_msgs/OctomapBinary.h>
-  #include <octomap_msgs/GetOctomap.h>
-  #include <octomap_msgs/BoundingBoxQuery.h>
-#else
-  #include <octomap_ros/OctomapBinary.h>
-  #include <octomap_ros/GetOctomap.h>
-  #include <octomap_ros/ClearBBXRegion.h>
-#endif
-
-#include <octomap_ros/OctomapROS.h>
-#include <octomap/OcTreeKey.h>
 
 #include <ros/ros.h>
-#include <message_filters/subscriber.h>
-#include <tf/message_filter.h>
 
-using namespace rviz;
+#include "rviz/default_plugin/map_display.h"
+
+#include <octomap_msgs/Octomap.h>
+
+#include <message_filters/subscriber.h>
+
 
 namespace octomap_rviz_plugin
 {
 
-/**
- * \class OccupancyMapDisplay
- *
- */
 class OccupancyMapDisplay: public rviz::MapDisplay
 {
 Q_OBJECT
@@ -67,6 +55,7 @@ public:
   virtual ~OccupancyMapDisplay();
 
 private Q_SLOTS:
+  void updateTopic();
   void updateTreeDepth();
 
 protected:
@@ -74,13 +63,12 @@ protected:
   virtual void subscribe();
   virtual void unsubscribe();
 
-  void handleOctomapBinaryMessage(const octomap_msgs::OctomapBinaryConstPtr& msg);
+  void handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg);
 
-  message_filters::Subscriber<octomap_msgs::OctomapBinary> sub_;
-  tf::MessageFilter<octomap_msgs::OctomapBinary>* tf_filter_;
+  boost::shared_ptr<message_filters::Subscriber<octomap_msgs::Octomap> > sub_;
 
-  unsigned int max_octree_depth_;
-  IntProperty* tree_depth_property_;
+  unsigned int octree_depth_;
+  rviz::IntProperty* tree_depth_property_;
 
 };
 

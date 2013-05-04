@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Willow Garage, Inc.
+ * Copyright (c) 2013, Willow Garage, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,81 +25,95 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: Julius Kammerl (jkammerl@willowgarage.com)
+ *
  */
 
 
-#include "occupancy_map_display.h"
+#include "octomap_rviz_plugins/occupancy_map_display.h"
 
 #include "rviz/visualization_manager.h"
-#include "rviz/properties/ros_topic_property.h"
 #include "rviz/properties/int_property.h"
-#include "rviz/properties/property.h"
-#include "rviz/validate_floats.h"
-#include "rviz/frame_manager.h"
+#include "rviz/properties/ros_topic_property.h"
+
+#include <octomap_msgs/Octomap.h>
+#include <octomap/octomap.h>
+#include <octomap_msgs/conversions.h>
+#include <octomap_ros/OctomapROS.h>
 
 using namespace rviz;
 
 namespace octomap_rviz_plugin
 {
 
+static const std::size_t max_octree_depth_ = sizeof(unsigned short) * 8;
+
 OccupancyMapDisplay::OccupancyMapDisplay()
   : rviz::MapDisplay()
-  , tf_filter_( 0 )
-  , max_octree_depth_ (16)
+  , octree_depth_ (max_octree_depth_)
 {
-  topic_property_->setName("Octomap Binary Topic");
-  topic_property_->setMessageType( QString::fromStdString(ros::message_traits::datatype<octomap_msgs::OctomapBinary>()) );
-  topic_property_->setDescription( "Octomap binary topic to subscribe to." );
 
-  tree_depth_property_ = new IntProperty("Max. Octree Depth", max_octree_depth_, "Defines the maximum tree depth", this,
+  topic_property_->setName("Octomap Binary Topic");
+  topic_property_->setMessageType(QString::fromStdString(ros::message_traits::datatype<octomap_msgs::Octomap>()));
+  topic_property_->setDescription("octomap_msgs::OctomapBinary topic to subscribe to.");
+
+  tree_depth_property_ = new IntProperty("Max. Octree Depth",
+                                         octree_depth_,
+                                         "Defines the maximum tree depth",
+                                         this,
                                          SLOT (updateTreeDepth() ));
 }
 
 OccupancyMapDisplay::~OccupancyMapDisplay()
 {
   unsubscribe();
-
-  if (tf_filter_)
-    delete tf_filter_;
 }
 
 void OccupancyMapDisplay::onInitialize()
 {
   rviz::MapDisplay::onInitialize();
-
-  tf_filter_ = new tf::MessageFilter<octomap_msgs::OctomapBinary>( *context_->getTFClient(), fixed_frame_.toStdString(), 1, threaded_nh_ );
-
-  tf_filter_->connectInput(sub_);
-  tf_filter_->registerCallback(boost::bind(&OccupancyMapDisplay::handleOctomapBinaryMessage, this, _1));
-  context_->getFrameManager()->registerFilterForTransformStatusCheck(tf_filter_, this);
 }
 
 void OccupancyMapDisplay::updateTreeDepth()
 {
-  max_octree_depth_ = tree_depth_property_->getInt();
+  octree_depth_ = tree_depth_property_->getInt();
+}
+
+void OccupancyMapDisplay::updateTopic()
+{
+  unsubscribe();
+  reset();
+  subscribe();
+  context_->queueRender();
 }
 
 void OccupancyMapDisplay::subscribe()
 {
-  if( !isEnabled() )
+  if (!isEnabled())
   {
     return;
   }
 
   try
   {
-    std::string topicStr = topic_property_->getStdString();
+    unsubscribe();
 
-    if (!topicStr.empty()) {
+    const std::string& topicStr = topic_property_->getStdString();
 
-      // subscribe to depth map topic
-      sub_.subscribe( threaded_nh_, topicStr, 1 );
+    if (!topicStr.empty())
+    {
+
+      sub_.reset(new message_filters::Subscriber<octomap_msgs::Octomap>());
+
+      sub_->subscribe(threaded_nh_, topicStr, 5);
+      sub_->registerCallback(boost::bind(&OccupancyMapDisplay::handleOctomapBinaryMessage, this, _1));
 
     }
   }
   catch (ros::Exception& e)
   {
-    setStatus( StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
+    setStatus(StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
   }
 }
 
@@ -110,22 +124,22 @@ void OccupancyMapDisplay::unsubscribe()
   try
   {
     // reset filters
-    sub_.unsubscribe( );
+    sub_.reset();
   }
   catch (ros::Exception& e)
   {
-    setStatus( StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
+    setStatus(StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
   }
 }
 
 
-void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::OctomapBinaryConstPtr& msg)
+void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
 {
-  // creating octree from OctomapBinary message
-  octomap::OcTree* octomap = NULL;
-  octomap = octomap_msgs::binaryMsgDataToMap(msg->data);
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
+
+  // creating octree from OctomapBinary message
+  octomap::OcTree* octomap = octomap_msgs::binaryMsgToMap(*msg);
 
   if (!octomap)
   {
@@ -149,10 +163,10 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
   unsigned int width, height;
   double res;
 
-  unsigned int ds_shift = tree_depth-max_octree_depth_;
+  unsigned int ds_shift = tree_depth-octree_depth_;
 
   occupancy_map->header = msg->header;
-  occupancy_map->info.resolution = res = octomap->getNodeSize(max_octree_depth_);
+  occupancy_map->info.resolution = res = octomap->getNodeSize(octree_depth_);
   occupancy_map->info.width = width = (maxX-minX) / res + 1;
   occupancy_map->info.height = height = (maxY-minY) / res + 1;
   occupancy_map->info.origin.position.x = minX  - (res / (float)(1<<ds_shift) ) + res;
@@ -162,10 +176,11 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
   occupancy_map->data.resize(width*height, -1);
 
     // traverse all leafs in the tree:
-  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(max_octree_depth_), end = octomap->end(); it != end; ++it)
+  unsigned int treeDepth = std::min<unsigned int>(octree_depth_, octomap->getTreeDepth());
+  for (octomap::OcTreeROS::OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
   {
     bool occupied = octomap->isNodeOccupied(*it);
-    int intSize = 1 << (max_octree_depth_ - it.getDepth());
+    int intSize = 1 << (octree_depth_ - it.getDepth());
 
     octomap::OcTreeKey minKey=it.getIndexKey();
 
@@ -201,5 +216,4 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 } // namespace rviz
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS( octomap_rviz_plugin, OccupancyMap, octomap_rviz_plugin::OccupancyMapDisplay, rviz::Display)
-
+PLUGINLIB_EXPORT_CLASS( octomap_rviz_plugin::OccupancyMapDisplay, rviz::Display)

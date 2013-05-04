@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Willow Garage, Inc.
+ * Copyright (c) 2013, Willow Garage, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,53 +25,35 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: Julius Kammerl (jkammerl@willowgarage.com)
+ *
  */
 
 #ifndef RVIZ_OCCUPANCY_GRID_DISPLAY_H
 #define RVIZ_OCCUPANCY_GRID_DISPLAY_H
 
+#include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <ros/ros.h>
 #include <message_filters/subscriber.h>
-#include <tf/message_filter.h>
 
-#include <image_geometry/pinhole_camera_model.h>
-
-#include "rviz/properties/bool_property.h"
-#include "rviz/properties/ros_topic_property.h"
-#include "rviz/properties/enum_property.h"
-#include "rviz/properties/float_property.h"
-#include "rviz/properties/int_property.h"
+#include <octomap_msgs/Octomap.h>
 
 #include <rviz/display.h>
-
 #include "rviz/ogre_helpers/point_cloud.h"
 
-#if ROS_VERSION_MINIMUM(1,8,0) // test for Fuerte (newer PCL)
-  #include <octomap_msgs/OctomapBinary.h>
-  #include <octomap_msgs/GetOctomap.h>
-  #include <octomap_msgs/BoundingBoxQuery.h>
-#else
-  #include <octomap_ros/OctomapBinary.h>
-  #include <octomap_ros/GetOctomap.h>
-  #include <octomap_ros/ClearBBXRegion.h>
-#endif
-
-#include <octomap_ros/OctomapROS.h>
-#include <octomap/OcTreeKey.h>
-
-using namespace rviz;
+namespace rviz {
+class RosTopicProperty;
+class IntProperty;
+class EnumProperty;
+}
 
 namespace octomap_rviz_plugin
 {
 
-/**
- * \class OccupancyGridDisplay
- *
- */
 class OccupancyGridDisplay : public rviz::Display
 {
 Q_OBJECT
@@ -79,67 +61,61 @@ public:
   OccupancyGridDisplay();
   virtual ~OccupancyGridDisplay();
 
-  // Initialize
-  virtual void onInitialize();
-
   // Overrides from Display
+  virtual void onInitialize();
   virtual void update(float wall_dt, float ros_dt);
   virtual void reset();
 
 private Q_SLOTS:
-  // rviz property slots
   void updateQueueSize();
   void updateTopic();
   void updateTreeDepth();
+  void updateOctreeRenderMode();
+  void updateOctreeColorMode();
 
 
 protected:
-  void incomingMessageCallback(const octomap_msgs::OctomapBinaryConstPtr& msg);
-
-  void setColor( double z_pos, double min_z, double max_z, double color_factor, PointCloud::Point& point);
-
   // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 
-  virtual void fixedFrameChanged();
-
   void subscribe();
   void unsubscribe();
 
+  void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);
+
+  void setColor( double z_pos, double min_z, double max_z, double color_factor, rviz::PointCloud::Point& point);
+
   void clear();
 
-  typedef std::vector<PointCloud::Point> VPoint;
+  typedef std::vector<rviz::PointCloud::Point> VPoint;
   typedef std::vector<VPoint> VVPoint;
 
-  // point buffer
-  VVPoint newPoints_;
-  VVPoint pointBuf_;
-  double boxSizes_[16];
-  bool newPointsReceived_;
-
-  uint32_t messages_received_;
+  boost::shared_ptr<message_filters::Subscriber<octomap_msgs::Octomap> > sub_;
 
   boost::mutex mutex_;
 
-  message_filters::Subscriber<octomap_msgs::OctomapBinary> sub_;
-  tf::MessageFilter<octomap_msgs::OctomapBinary>* tf_filter_;
+  // point buffer
+  VVPoint new_points_;
+  VVPoint point_buf_;
+  bool new_points_received_;
 
   // Ogre-rviz point clouds
-  PointCloud* cloud_[16];
+  std::vector<rviz::PointCloud*> cloud_;
+  std::vector<double> box_size_;
 
   // Plugin properties
-  IntProperty* queue_size_property_;
+  rviz::IntProperty* queue_size_property_;
+  rviz::RosTopicProperty* octomap_topic_property_;
+  rviz::EnumProperty* octree_render_property_;
+  rviz::EnumProperty* octree_coloring_property_;
+  rviz::IntProperty* tree_depth_property_;
+
   u_int32_t queue_size_;
-
-  RosTopicProperty* octomap_topic_property_;
-
-  IntProperty* tree_depth_property_;
-  unsigned int treeDepth_;
-
-  double colorFactor_;
+  std::size_t octree_depth_;
+  uint32_t messages_received_;
+  double color_factor_;
 };
-
 
 } // namespace octomap_rviz_plugin
 

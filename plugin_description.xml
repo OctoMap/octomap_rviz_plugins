@@ -1,0 +1,18 @@
+
+<library path="lib/liboctomap_rviz_plugins">
+  <class name="octomap_rviz_plugin/OccupancyGrid"
+         type="octomap_rviz_plugin::OccupancyGridDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays occupancy grids generated from compressed octomap binary messages.
+    </description>
+  </class>
+  <class name="octomap_rviz_plugin/OccupancyMap"
+	     type="octomap_rviz_plugin::OccupancyMapDisplay"
+	     base_class_type="rviz::Display">
+    <description>
+      Displays occupancy maps generated from compressed octomap binary messages.
+    </description>
+  </class>
+</library>
+  

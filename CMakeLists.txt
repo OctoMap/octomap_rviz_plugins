@@ -38,6 +38,7 @@ link_directories(${catkin_LIBRARY_DIRS}
 qt4_wrap_cpp(MOC_FILES
   include/octomap_rviz_plugins/occupancy_grid_display.h
   include/octomap_rviz_plugins/occupancy_map_display.h
+  OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 )
 
 set(SOURCE_FILES

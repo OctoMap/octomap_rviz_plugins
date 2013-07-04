@@ -137,8 +137,9 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
-  // creating octree from OctomapBinary message
-  octomap::OcTree* octomap = octomap_msgs::binaryMsgToMap(*msg);
+  // creating octree
+  octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
+  octomap::OcTree* octomap = dynamic_cast<octomap::OcTree*>(tree);
 
   if (!octomap)
   {

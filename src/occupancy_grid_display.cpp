@@ -289,8 +289,11 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   scene_node_->setPosition(pos);
 
   // creating octree
+  octomap::OcTree* octomap = NULL;
   octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
-  octomap::OcTree* octomap = dynamic_cast<octomap::OcTree*>(tree);
+  if (tree){
+    octomap = dynamic_cast<octomap::OcTree*>(tree);
+  }
 
   if (!octomap)
   {

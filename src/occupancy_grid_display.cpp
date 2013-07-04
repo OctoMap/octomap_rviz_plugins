@@ -288,8 +288,9 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   scene_node_->setOrientation(orient);
   scene_node_->setPosition(pos);
 
-  // creating octree from OctomapBinary message
-  octomap::OcTree* octomap = octomap_msgs::binaryMsgToMap(*msg);
+  // creating octree
+  octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
+  octomap::OcTree* octomap = dynamic_cast<octomap::OcTree*>(tree);
 
   if (!octomap)
   {

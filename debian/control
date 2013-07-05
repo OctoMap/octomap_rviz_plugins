@@ -1,0 +1,12 @@
+Source: ros-groovy-octomap-rviz-plugins
+Section: misc
+Priority: extra
+Maintainer: "Julius Kammerl <jkammerl@willowgarage.com>"
+Build-Depends: debhelper (>= 7.0.50~), ros-groovy-catkin, ros-groovy-octomap, ros-groovy-octomap-msgs, ros-groovy-roscpp, ros-groovy-rviz
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-groovy-octomap-rviz-plugins
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-groovy-octomap, ros-groovy-octomap-msgs, ros-groovy-roscpp, ros-groovy-rviz
+Description: A set of plugins for displaying occupancy information decoded from binary octomap messages.

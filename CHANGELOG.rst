@@ -1,0 +1,31 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package octomap_rviz_plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+
+0.0.4 (2013-07-05)
+------------------
+* Safer checking for octree conversion from stream
+* Create octomap using AbstracOcTree (Fix issue #1)
+
+0.0.3 (2013-06-26)
+------------------
+* correct CMakeLists. octomap_INCLUDE_DIRS(or LIB..) to OCTOMAP_INCLUDE_DIRS 
+
+0.0.2 (2013-05-08)
+------------------
+* 0.0.1 -> 0.0.2
+* adding OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED option to make QT4_WRAP macro happy
+
+0.0.1 (2013-05-04)
+------------------
+* removing dependency to octomap_ros package + clean-up
+* removing rosbuild Makefile
+* major revision
+* adjusting to recent rviz api changes
+* removed pcl dependancy
+* fixed threading issue
+* working version with ogre point cloud structures and colored boxes
+* added max depth filter

@@ -28,16 +28,17 @@ catkin_package(
 include_directories(include 
                     ${catkin_INCLUDE_DIRS} 
                     ${Boost_INCLUDE_DIRS} 
-                    ${octomap_INCLUDE_DIRS})
+                    ${OCTOMAP_INCLUDE_DIRS})
 
 link_directories(${catkin_LIBRARY_DIRS}
                  ${Boost_LIBRARY_DIRS}
-                 ${octomap_LIBRARY_DIRS}) 
+                 ${OCTOMAP_LIBRARY_DIRS}) 
 
 
 qt4_wrap_cpp(MOC_FILES
   include/octomap_rviz_plugins/occupancy_grid_display.h
   include/octomap_rviz_plugins/occupancy_map_display.h
+  OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 )
 
 set(SOURCE_FILES
@@ -47,7 +48,7 @@ set(SOURCE_FILES
 )
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${octomap_LIBRARIES} ${catkin_LIBRARIES} -ldefault_plugin)
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} -ldefault_plugin)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

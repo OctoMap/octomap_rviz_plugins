@@ -79,10 +79,10 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
     octree_depth_(0)
 {
 
-  octomap_topic_property_ = new RosTopicProperty( "Octomap Binary Topic",
+  octomap_topic_property_ = new RosTopicProperty( "Octomap Topic",
                                                   "",
                                                   QString::fromStdString(ros::message_traits::datatype<octomap_msgs::Octomap>()),
-                                                  "octomap_msgs::OctomapBinary topic to subscribe to.",
+                                                  "octomap_msgs::Octomap topic to subscribe to (binary or full probability map)",
                                                   this,
                                                   SLOT( updateTopic() ));
 
@@ -117,6 +117,7 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                          "Defines the maximum tree depth",
                                          this,
                                          SLOT (updateTreeDepth() ));
+  tree_depth_property_->setMin(0);
 }
 
 void OccupancyGridDisplay::onInitialize()
@@ -269,7 +270,7 @@ void OccupancyGridDisplay::setColor(double z_pos, double min_z, double max_z, do
 void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
 {
   ++messages_received_;
-  setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " binary octomap messages received");
+  setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
@@ -302,6 +303,8 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   }
 
   std::size_t octree_depth = octomap->getTreeDepth();
+  tree_depth_property_->setMax(octomap->getTreeDepth());
+  
 
   // get dimensions of octree
   double minX, minY, minZ, maxX, maxY, maxZ;

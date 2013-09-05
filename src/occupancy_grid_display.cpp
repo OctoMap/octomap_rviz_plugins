@@ -146,10 +146,12 @@ OccupancyGridDisplay::~OccupancyGridDisplay()
 
   unsubscribe();
 
-  for (i = 0; i < max_octree_depth_; ++i)
-    delete cloud_[i];
+  for (std::vector<rviz::PointCloud*>::iterator it = cloud_.begin(); it != cloud_.end(); ++it) {
+    delete *(it);
+  }
 
-  scene_node_->detachAllObjects();
+  if (scene_node_)
+    scene_node_->detachAllObjects();
 }
 
 void OccupancyGridDisplay::updateQueueSize()

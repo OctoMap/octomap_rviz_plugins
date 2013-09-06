@@ -1,3 +1,9 @@
+0.0.5 (2013-09-06)
+------------------
+* fix a crash when the destructor is called before onInitialize
+* Fix descriptions, limit octree depth range
+* Porting fixes from groovy branch (QT4_WRAP macro, OCTOMAP_INCLUDE_DIRS)
+
 0.0.4 (2013-07-05)
 ------------------
 * Safer checking for octree conversion from stream

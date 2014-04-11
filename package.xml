@@ -6,6 +6,10 @@
     </description>
 
   <maintainer email="jkammerl@willowgarage.com">Julius Kammerl</maintainer>
+  <maintainer email="HornungA@informatik.uni-freiburg.de">Armin Hornung</maintainer>
+  
+  <url type="website">http://ros.org/wiki/octomap_rviz_plugins</url>
+  <url type="bugtracker">https://github.com/OctoMap/octomap_rviz_plugins/issues</url>
 
   <license>BSD</license>
 

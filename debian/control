@@ -1,0 +1,12 @@
+Source: ros-hydro-octomap-rviz-plugins
+Section: misc
+Priority: extra
+Maintainer: Julius Kammerl <jkammerl@willowgarage.com>
+Build-Depends: debhelper (>= 9.0.0), ros-hydro-catkin, ros-hydro-octomap, ros-hydro-octomap-msgs, ros-hydro-roscpp, ros-hydro-rviz
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-hydro-octomap-rviz-plugins
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-hydro-octomap, ros-hydro-octomap-msgs, ros-hydro-roscpp, ros-hydro-rviz
+Description: A set of plugins for displaying occupancy information decoded from binary octomap messages.

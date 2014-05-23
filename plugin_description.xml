@@ -4,14 +4,14 @@
          type="octomap_rviz_plugin::OccupancyGridDisplay"
          base_class_type="rviz::Display">
     <description>
-      Displays 3D occupancy grids generated from compressed octomap messages.
+      Displays occupancy grids generated from compressed octomap binary messages.
     </description>
   </class>
   <class name="octomap_rviz_plugin/OccupancyMap"
 	     type="octomap_rviz_plugin::OccupancyMapDisplay"
 	     base_class_type="rviz::Display">
     <description>
-      Displays projected 2D occupancy maps generated from compressed octomap messages.
+      Displays occupancy maps generated from compressed octomap binary messages.
     </description>
   </class>
 </library>

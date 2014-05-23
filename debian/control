@@ -1,0 +1,12 @@
+Source: ros-indigo-octomap-rviz-plugins
+Section: misc
+Priority: extra
+Maintainer: Julius Kammerl <jkammerl@willowgarage.com>
+Build-Depends: debhelper (>= 9.0.0), ros-indigo-catkin, ros-indigo-octomap, ros-indigo-octomap-msgs, ros-indigo-roscpp, ros-indigo-rviz
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-indigo-octomap-rviz-plugins
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-indigo-octomap, ros-indigo-octomap-msgs, ros-indigo-roscpp, ros-indigo-rviz
+Description: A set of plugins for displaying occupancy information decoded from binary octomap messages.

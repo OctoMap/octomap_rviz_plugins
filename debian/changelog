@@ -1,0 +1,42 @@
+ros-indigo-octomap-rviz-plugins (0.0.5-1saucy) saucy; urgency=high
+
+  * fix a crash when the destructor is called before onInitialize
+  * Fix descriptions, limit octree depth range
+  * Porting fixes from groovy branch (QT4_WRAP macro, OCTOMAP_INCLUDE_DIRS)
+
+ -- Julius Kammerl <jkammerl@willowgarage.com>  Thu, 05 Sep 2013 22:00:00 -0000
+
+ros-indigo-octomap-rviz-plugins (0.0.4-1saucy) saucy; urgency=high
+
+  * Safer checking for octree conversion from stream
+  * Create octomap using AbstracOcTree (Fix issue #1)
+
+ -- Julius Kammerl <jkammerl@willowgarage.com>  Thu, 04 Jul 2013 22:00:00 -0000
+
+ros-indigo-octomap-rviz-plugins (0.0.3-1saucy) saucy; urgency=high
+
+  * correct CMakeLists. octomap_INCLUDE_DIRS(or LIB..) to OCTOMAP_INCLUDE_DIRS
+
+ -- Julius Kammerl <jkammerl@willowgarage.com>  Tue, 25 Jun 2013 22:00:00 -0000
+
+ros-indigo-octomap-rviz-plugins (0.0.2-1saucy) saucy; urgency=high
+
+  * 0.0.1 -> 0.0.2
+  * adding OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED option to make QT4_WRAP macro happy
+
+ -- Julius Kammerl <jkammerl@willowgarage.com>  Tue, 07 May 2013 22:00:00 -0000
+
+ros-indigo-octomap-rviz-plugins (0.0.1-1saucy) saucy; urgency=high
+
+  * removing dependency to octomap_ros package + clean-up
+  * removing rosbuild Makefile
+  * major revision
+  * adjusting to recent rviz api changes
+  * removed pcl dependancy
+  * fixed threading issue
+  * working version with ogre point cloud structures and colored boxes
+  * added max depth filter
+
+ -- Julius Kammerl <jkammerl@willowgarage.com>  Fri, 03 May 2013 22:00:00 -0000
+
+

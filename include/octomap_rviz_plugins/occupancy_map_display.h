@@ -33,6 +33,8 @@
 #ifndef RVIZ_OCCUPANCY_MAP_DISPLAY_H
 #define RVIZ_OCCUPANCY_MAP_DISPLAY_H
 
+#ifndef Q_MOC_RUN 
+
 #include <qobject.h>
 
 #include <ros/ros.h>
@@ -43,6 +45,7 @@
 
 #include <message_filters/subscriber.h>
 
+#endif
 
 namespace octomap_rviz_plugin
 {

@@ -33,6 +33,7 @@
 #ifndef RVIZ_OCCUPANCY_GRID_DISPLAY_H
 #define RVIZ_OCCUPANCY_GRID_DISPLAY_H
 
+#ifndef Q_MOC_RUN 
 #include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
@@ -44,6 +45,8 @@
 
 #include <rviz/display.h>
 #include "rviz/ogre_helpers/point_cloud.h"
+
+#endif
 
 namespace rviz {
 class RosTopicProperty;

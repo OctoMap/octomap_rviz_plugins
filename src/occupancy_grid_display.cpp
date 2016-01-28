@@ -44,6 +44,7 @@
 #include "rviz/properties/int_property.h"
 #include "rviz/properties/ros_topic_property.h"
 #include "rviz/properties/enum_property.h"
+#include "rviz/properties/float_property.h"
 
 #include <octomap/octomap.h>
 #include <octomap_msgs/Octomap.h>
@@ -111,6 +112,11 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
 
   octree_coloring_property_->addOption( "Z-Axis",  OCTOMAP_Z_AXIS_COLOR );
   octree_coloring_property_->addOption( "Cell Probability",  OCTOMAP_PROBABLILTY_COLOR );
+  alpha_property_ = new rviz::FloatProperty( "Voxel Alpha", 1.0, "Set voxel transparency alpha",
+                                             this, 
+                                             SLOT( updateAlpha() ) );
+  alpha_property_->setMin(0.0);
+  alpha_property_->setMax(1.0);
 
   tree_depth_property_ = new IntProperty("Max. Octree Depth",
                                          max_octree_depth_,
@@ -428,6 +434,10 @@ void OccupancyGridDisplay::updateOctreeColorMode()
 {
 }
 
+void OccupancyGridDisplay::updateAlpha()
+{
+}
+
 void OccupancyGridDisplay::clear()
 {
 
@@ -445,7 +455,7 @@ void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
   if (new_points_received_)
   {
     boost::mutex::scoped_lock lock(mutex_);
-
+    
     for (size_t i = 0; i < max_octree_depth_; ++i)
     {
       double size = box_size_[i];
@@ -455,7 +465,7 @@ void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
 
       cloud_[i]->addPoints(&new_points_[i].front(), new_points_[i].size());
       new_points_[i].clear();
-
+      cloud_[i]->setAlpha(alpha_property_->getFloat());
     }
     new_points_received_ = false;
   }

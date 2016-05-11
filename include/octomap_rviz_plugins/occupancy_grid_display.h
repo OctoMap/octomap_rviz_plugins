@@ -77,6 +77,8 @@ private Q_SLOTS:
   void updateOctreeRenderMode();
   void updateOctreeColorMode();
   void updateAlpha();
+  void updateMaxHeight();
+  void updateMinHeight();
 
 protected:
   // overrides from Display
@@ -115,12 +117,12 @@ protected:
   rviz::EnumProperty* octree_coloring_property_;
   rviz::IntProperty* tree_depth_property_;
   rviz::FloatProperty* alpha_property_;
+  rviz::FloatProperty* max_height_property_;
+  rviz::FloatProperty* min_height_property_;
 
   u_int32_t queue_size_;
-  std::size_t octree_depth_;
   uint32_t messages_received_;
   double color_factor_;
-  double alpha_;
 };
 
 } // namespace octomap_rviz_plugin

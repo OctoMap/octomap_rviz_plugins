@@ -72,7 +72,6 @@ protected:
 
   unsigned int octree_depth_;
   rviz::IntProperty* tree_depth_property_;
-
 };
 
 } // namespace rviz

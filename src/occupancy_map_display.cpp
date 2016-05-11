@@ -172,7 +172,7 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
   occupancy_map->info.width = width = (maxX-minX) / res + 1;
   occupancy_map->info.height = height = (maxY-minY) / res + 1;
   occupancy_map->info.origin.position.x = minX  - (res / (float)(1<<ds_shift) ) + res;
-  occupancy_map->info.origin.position.y = minY  - (res / (float)(1<<ds_shift) );;
+  occupancy_map->info.origin.position.y = minY  - (res / (float)(1<<ds_shift) );
 
   occupancy_map->data.clear();
   occupancy_map->data.resize(width*height, -1);

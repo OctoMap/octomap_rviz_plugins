@@ -76,8 +76,7 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
     new_points_received_(false),
     messages_received_(0),
     queue_size_(5),
-    color_factor_(0.8),
-    octree_depth_(0)
+    color_factor_(0.8)
 {
 
   octomap_topic_property_ = new RosTopicProperty( "Octomap Topic",
@@ -124,6 +123,18 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                          this,
                                          SLOT (updateTreeDepth() ));
   tree_depth_property_->setMin(0);
+
+  max_height_property_ = new FloatProperty("Max. Height Display",
+                                           std::numeric_limits<double>::infinity(),
+                                           "Defines the maximum height to display",
+                                           this,
+                                           SLOT (updateMaxHeight() ));
+
+  min_height_property_ = new FloatProperty("Min. Height Display",
+                                           -std::numeric_limits<double>::infinity(),
+                                           "Defines the minimum height to display",
+                                           this,
+                                           SLOT (updateMinHeight() ));
 }
 
 void OccupancyGridDisplay::onInitialize()
@@ -319,6 +330,12 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   octomap->getMetricMin(minX, minY, minZ);
   octomap->getMetricMax(maxX, maxY, maxZ);
 
+  max_height_property_->setMin(minZ);
+  max_height_property_->setMax(maxZ);
+
+  min_height_property_->setMin(minZ);
+  min_height_property_->setMax(maxZ);
+
   // reset rviz pointcloud classes
   for (std::size_t i = 0; i < max_octree_depth_; ++i)
   {
@@ -330,80 +347,84 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   {
     // traverse all leafs in the tree:
     unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
+    double maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
+    double minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
     for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
     {
 
       if (octomap->isNodeOccupied(*it))
       {
-
-        int render_mode_mask = octree_render_property_->getOptionInt();
-
-        bool display_voxel = false;
-
-        // the left part evaluates to 1 for free voxels and 2 for occupied voxels
-        if (((int)octomap->isNodeOccupied(*it) + 1) & render_mode_mask)
+        if(it.getZ() <= maxHeight && it.getZ() >= minHeight)
         {
-          // check if current voxel has neighbors on all sides -> no need to be displayed
-          bool allNeighborsFound = true;
+          int render_mode_mask = octree_render_property_->getOptionInt();
 
-          octomap::OcTreeKey key;
-          octomap::OcTreeKey nKey = it.getKey();
+          bool display_voxel = false;
 
-          for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
+          // the left part evaluates to 1 for free voxels and 2 for occupied voxels
+          if (((int)octomap->isNodeOccupied(*it) + 1) & render_mode_mask)
           {
-            for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
-            {
-              for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
-              {
-                if (key != nKey)
-                {
-                  octomap::OcTreeNode* node = octomap->search(key);
+            // check if current voxel has neighbors on all sides -> no need to be displayed
+            bool allNeighborsFound = true;
 
-                  // the left part evaluates to 1 for free voxels and 2 for occupied voxels
-                  if (!(node && (((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask))
+            octomap::OcTreeKey key;
+            octomap::OcTreeKey nKey = it.getKey();
+
+            for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
+            {
+              for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
+              {
+                for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
+                {
+                  if (key != nKey)
                   {
-                    // we do not have a neighbor => break!
-                    allNeighborsFound = false;
+                    octomap::OcTreeNode* node = octomap->search(key);
+
+                    // the left part evaluates to 1 for free voxels and 2 for occupied voxels
+                    if (!(node && ((((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask)))
+                    {
+                      // we do not have a neighbor => break!
+                      allNeighborsFound = false;
+                    }
                   }
                 }
               }
             }
+
+            display_voxel |= !allNeighborsFound;
           }
 
-          display_voxel |= !allNeighborsFound;
-        }
 
-
-        if (display_voxel)
-        {
-          PointCloud::Point newPoint;
-
-          newPoint.position.x = it.getX();
-          newPoint.position.y = it.getY();
-          newPoint.position.z = it.getZ();
-
-          float cell_probability;
-
-          OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
-
-          switch (octree_color_mode)
+          if (display_voxel)
           {
-            case OCTOMAP_Z_AXIS_COLOR:
-              setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
-              break;
-            case OCTOMAP_PROBABLILTY_COLOR:
-              cell_probability = it->getOccupancy();
-              newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
-              break;
-            default:
-              break;
+            PointCloud::Point newPoint;
+
+            newPoint.position.x = it.getX();
+            newPoint.position.y = it.getY();
+            newPoint.position.z = it.getZ();
+
+            float cell_probability;
+
+            OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
+
+            switch (octree_color_mode)
+            {
+              case OCTOMAP_Z_AXIS_COLOR:
+                setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+                break;
+              case OCTOMAP_PROBABLILTY_COLOR:
+                cell_probability = it->getOccupancy();
+                newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
+                break;
+              default:
+                break;
+            }
+
+            // push to point vectors
+            unsigned int depth = it.getDepth();
+            point_buf_[depth - 1].push_back(newPoint);
+
+            ++pointCount;
           }
-
-          // push to point vectors
-          unsigned int depth = it.getDepth();
-          point_buf_[depth - 1].push_back(newPoint);
-
-          ++pointCount;
         }
       }
     }
@@ -435,6 +456,14 @@ void OccupancyGridDisplay::updateOctreeColorMode()
 }
 
 void OccupancyGridDisplay::updateAlpha()
+{
+}
+
+void OccupancyGridDisplay::updateMaxHeight()
+{
+}
+
+void OccupancyGridDisplay::updateMinHeight()
 {
 }
 

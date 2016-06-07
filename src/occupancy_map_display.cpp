@@ -132,16 +132,17 @@ void OccupancyMapDisplay::unsubscribe()
 }
 
 
-void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
+template <typename OcTreeType, typename OcNodeType>
+void TemplatedOccupancyMapDisplay<OcTreeType, OcNodeType>::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
 {
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
   // creating octree
-  octomap::OcTree* octomap = NULL;
+  OcTreeType* octomap = NULL;
   octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
   if (tree){
-    octomap = dynamic_cast<octomap::OcTree*>(tree);
+    octomap = dynamic_cast<OcTreeType*>(tree);
   }
 
   if (!octomap)
@@ -179,7 +180,7 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 
     // traverse all leafs in the tree:
   unsigned int treeDepth = std::min<unsigned int>(octree_depth_, octomap->getTreeDepth());
-  for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+  for (typename OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
   {
     bool occupied = octomap->isNodeOccupied(*it);
     int intSize = 1 << (octree_depth_ - it.getDepth());
@@ -218,4 +219,8 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 } // namespace rviz
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS( octomap_rviz_plugin::OccupancyMapDisplay, rviz::Display)
+typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTree, octomap::OcTreeNode> OcTreeMapDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTreeStamped, octomap::OcTreeNodeStamped> OcTreeStampedMapDisplay;
+
+PLUGINLIB_EXPORT_CLASS( OcTreeMapDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS( OcTreeStampedMapDisplay, rviz::Display)

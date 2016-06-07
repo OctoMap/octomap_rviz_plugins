@@ -286,7 +286,81 @@ void OccupancyGridDisplay::setColor(double z_pos, double min_z, double max_z, do
   }
 }
 
-void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
+void OccupancyGridDisplay::updateTreeDepth()
+{
+}
+
+void OccupancyGridDisplay::updateOctreeRenderMode()
+{
+}
+
+void OccupancyGridDisplay::updateOctreeColorMode()
+{
+}
+
+void OccupancyGridDisplay::updateAlpha()
+{
+}
+
+void OccupancyGridDisplay::updateMaxHeight()
+{
+}
+
+void OccupancyGridDisplay::updateMinHeight()
+{
+}
+
+void OccupancyGridDisplay::clear()
+{
+
+  boost::mutex::scoped_lock lock(mutex_);
+
+  // reset rviz pointcloud boxes
+  for (size_t i = 0; i < cloud_.size(); ++i)
+  {
+    cloud_[i]->clear();
+  }
+}
+
+void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
+{
+  if (new_points_received_)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    for (size_t i = 0; i < max_octree_depth_; ++i)
+    {
+      double size = box_size_[i];
+
+      cloud_[i]->clear();
+      cloud_[i]->setDimensions(size, size, size);
+
+      cloud_[i]->addPoints(&new_points_[i].front(), new_points_[i].size());
+      new_points_[i].clear();
+      cloud_[i]->setAlpha(alpha_property_->getFloat());
+    }
+    new_points_received_ = false;
+  }
+}
+
+void OccupancyGridDisplay::reset()
+{
+  clear();
+  messages_received_ = 0;
+  setStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
+}
+
+void OccupancyGridDisplay::updateTopic()
+{
+  unsubscribe();
+  reset();
+  subscribe();
+  context_->queueRender();
+}
+
+
+template <typename OcTreeType, typename OcNodeType>
+void TemplatedOccupancyGridDisplay<OcTreeType, OcNodeType>::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
 {
   ++messages_received_;
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
@@ -309,10 +383,10 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   scene_node_->setPosition(pos);
 
   // creating octree
-  octomap::OcTree* octomap = NULL;
+  OcTreeType* octomap = NULL;
   octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
   if (tree){
-    octomap = dynamic_cast<octomap::OcTree*>(tree);
+    octomap = dynamic_cast<OcTreeType*>(tree);
   }
 
   if (!octomap)
@@ -323,7 +397,7 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
 
   std::size_t octree_depth = octomap->getTreeDepth();
   tree_depth_property_->setMax(octomap->getTreeDepth());
-  
+
 
   // get dimensions of octree
   double minX, minY, minZ, maxX, maxY, maxZ;
@@ -349,7 +423,7 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
     unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
     double maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
     double minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
-    for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+    for (typename OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
     {
 
       if (octomap->isNodeOccupied(*it))
@@ -377,7 +451,7 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
                 {
                   if (key != nKey)
                   {
-                    octomap::OcTreeNode* node = octomap->search(key);
+                    OcNodeType* node = octomap->search(key);
 
                     // the left part evaluates to 1 for free voxels and 2 for occupied voxels
                     if (!(node && ((((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask)))
@@ -443,82 +517,13 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   delete octomap;
 }
 
-void OccupancyGridDisplay::updateTreeDepth()
-{
-}
-
-void OccupancyGridDisplay::updateOctreeRenderMode()
-{
-}
-
-void OccupancyGridDisplay::updateOctreeColorMode()
-{
-}
-
-void OccupancyGridDisplay::updateAlpha()
-{
-}
-
-void OccupancyGridDisplay::updateMaxHeight()
-{
-}
-
-void OccupancyGridDisplay::updateMinHeight()
-{
-}
-
-void OccupancyGridDisplay::clear()
-{
-
-  boost::mutex::scoped_lock lock(mutex_);
-
-  // reset rviz pointcloud boxes
-  for (size_t i = 0; i < cloud_.size(); ++i)
-  {
-    cloud_[i]->clear();
-  }
-}
-
-void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
-{
-  if (new_points_received_)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-    
-    for (size_t i = 0; i < max_octree_depth_; ++i)
-    {
-      double size = box_size_[i];
-
-      cloud_[i]->clear();
-      cloud_[i]->setDimensions(size, size, size);
-
-      cloud_[i]->addPoints(&new_points_[i].front(), new_points_[i].size());
-      new_points_[i].clear();
-      cloud_[i]->setAlpha(alpha_property_->getFloat());
-    }
-    new_points_received_ = false;
-  }
-}
-
-void OccupancyGridDisplay::reset()
-{
-  clear();
-  messages_received_ = 0;
-  setStatus(StatusProperty::Ok, "Messages", QString("0 binary octomap messages received"));
-}
-
-void OccupancyGridDisplay::updateTopic()
-{
-  unsubscribe();
-  reset();
-  subscribe();
-  context_->queueRender();
-}
-
-
 } // namespace octomap_rviz_plugin
 
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS( octomap_rviz_plugin::OccupancyGridDisplay, rviz::Display)
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTree, octomap::OcTreeNode> OcTreeGridDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTreeStamped, octomap::OcTreeNodeStamped> OcTreeStampedGridDisplay;
+
+PLUGINLIB_EXPORT_CLASS( OcTreeGridDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS( OcTreeStampedGridDisplay, rviz::Display)
 

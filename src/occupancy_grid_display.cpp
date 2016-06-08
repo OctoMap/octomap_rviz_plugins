@@ -49,8 +49,21 @@
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
 
+
 #include <sstream>
 
+//As in octomap_server/OctomapServer.h. 
+//Not taken from there, as this would introduce a build dependency
+//#define COLOR_OCTOMAP_SERVER 
+#ifdef COLOR_OCTOMAP_SERVER
+#include <octomap/ColorOcTree.h>
+#endif
+
+#ifdef COLOR_OCTOMAP_SERVER
+  typedef octomap::ColorOcTree OcTreeT;
+#else
+  typedef octomap::OcTree OcTreeT;
+#endif
 using namespace rviz;
 
 namespace octomap_rviz_plugin
@@ -66,6 +79,9 @@ enum OctreeVoxelRenderMode
 
 enum OctreeVoxelColorMode
 {
+#ifdef COLOR_OCTOMAP_SERVER
+  OCTOMAP_CELL_COLOR,
+#endif
   OCTOMAP_Z_AXIS_COLOR,
   OCTOMAP_PROBABLILTY_COLOR,
 };
@@ -109,6 +125,9 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                                 this,
                                                 SLOT( updateOctreeColorMode() ) );
 
+#ifdef COLOR_OCTOMAP_SERVER
+  octree_coloring_property_->addOption( "Cell Color",  OCTOMAP_CELL_COLOR );
+#endif
   octree_coloring_property_->addOption( "Z-Axis",  OCTOMAP_Z_AXIS_COLOR );
   octree_coloring_property_->addOption( "Cell Probability",  OCTOMAP_PROBABLILTY_COLOR );
 
@@ -292,10 +311,10 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   scene_node_->setPosition(pos);
 
   // creating octree
-  octomap::OcTree* octomap = NULL;
+  OcTreeT* octomap = NULL;
   octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
   if (tree){
-    octomap = dynamic_cast<octomap::OcTree*>(tree);
+    octomap = dynamic_cast<OcTreeT*>(tree);
   }
 
   if (!octomap)
@@ -324,7 +343,7 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   {
     // traverse all leafs in the tree:
     unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
-    for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+    for (OcTreeT::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
     {
 
       if (octomap->isNodeOccupied(*it))
@@ -376,12 +395,31 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
           newPoint.position.y = it.getY();
           newPoint.position.z = it.getZ();
 
+  
           float cell_probability;
 
           OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
 
           switch (octree_color_mode)
           {
+#ifdef COLOR_OCTOMAP_SERVER
+            case OCTOMAP_CELL_COLOR:
+            {
+              if(octomap::ColorOcTreeNode* node = dynamic_cast<octomap::ColorOcTreeNode*>(&*it))
+              {
+                const float b2f = 1./256.; 
+                octomap::ColorOcTreeNode::Color& color = node->getColor();
+                newPoint.setColor(b2f*color.r, b2f*color.g, b2f*color.b, it->getOccupancy());
+                break;
+              }
+              else 
+              { 
+                setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
+                octree_color_mode = OCTOMAP_Z_AXIS_COLOR; //Fallback 
+              }
+              //Intentional fall-through for else-case
+            }
+#endif
             case OCTOMAP_Z_AXIS_COLOR:
               setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
               break;

@@ -54,7 +54,7 @@
 
 //As in octomap_server/OctomapServer.h. 
 //Not taken from there, as this would introduce a build dependency
-#define COLOR_OCTOMAP_SERVER 
+//#define COLOR_OCTOMAP_SERVER 
 #ifdef COLOR_OCTOMAP_SERVER
 #include <octomap/ColorOcTree.h>
 #endif

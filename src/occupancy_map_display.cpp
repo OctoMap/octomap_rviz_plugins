@@ -132,8 +132,8 @@ void OccupancyMapDisplay::unsubscribe()
 }
 
 
-template <typename OcTreeType, typename OcNodeType>
-void TemplatedOccupancyMapDisplay<OcTreeType, OcNodeType>::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
+template <typename OcTreeType>
+void TemplatedOccupancyMapDisplay<OcTreeType>::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
 {
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
@@ -219,8 +219,8 @@ void TemplatedOccupancyMapDisplay<OcTreeType, OcNodeType>::handleOctomapBinaryMe
 } // namespace rviz
 
 #include <pluginlib/class_list_macros.h>
-typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTree, octomap::OcTreeNode> OcTreeMapDisplay;
-typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTreeStamped, octomap::OcTreeNodeStamped> OcTreeStampedMapDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTree> OcTreeMapDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTreeStamped> OcTreeStampedMapDisplay;
 
 PLUGINLIB_EXPORT_CLASS( OcTreeMapDisplay, rviz::Display)
 PLUGINLIB_EXPORT_CLASS( OcTreeStampedMapDisplay, rviz::Display)

@@ -127,7 +127,7 @@ protected:
   double color_factor_;
 };
 
-template <typename OcTreeType, typename OcNodeType>
+template <typename OcTreeType>
 class TemplatedOccupancyGridDisplay: public OccupancyGridDisplay {
 protected:
   void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);

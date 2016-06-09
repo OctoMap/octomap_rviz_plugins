@@ -76,7 +76,7 @@ protected:
   rviz::IntProperty* tree_depth_property_;
 };
 
-template <typename OcTreeType, typename OcNodeType>
+template <typename OcTreeType>
 class TemplatedOccupancyMapDisplay: public OccupancyMapDisplay {
 protected:
     void handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg);

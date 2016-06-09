@@ -359,8 +359,8 @@ void OccupancyGridDisplay::updateTopic()
 }
 
 
-template <typename OcTreeType, typename OcNodeType>
-void TemplatedOccupancyGridDisplay<OcTreeType, OcNodeType>::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
+template <typename OcTreeType>
+void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
 {
   ++messages_received_;
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
@@ -451,7 +451,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType, OcNodeType>::incomingMessageCallb
                 {
                   if (key != nKey)
                   {
-                    OcNodeType* node = octomap->search(key);
+                    typename OcTreeType::NodeType* node = octomap->search(key);
 
                     // the left part evaluates to 1 for free voxels and 2 for occupied voxels
                     if (!(node && ((((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask)))
@@ -521,8 +521,8 @@ void TemplatedOccupancyGridDisplay<OcTreeType, OcNodeType>::incomingMessageCallb
 
 #include <pluginlib/class_list_macros.h>
 
-typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTree, octomap::OcTreeNode> OcTreeGridDisplay;
-typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTreeStamped, octomap::OcTreeNodeStamped> OcTreeStampedGridDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTree> OcTreeGridDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTreeStamped> OcTreeStampedGridDisplay;
 
 PLUGINLIB_EXPORT_CLASS( OcTreeGridDisplay, rviz::Display)
 PLUGINLIB_EXPORT_CLASS( OcTreeStampedGridDisplay, rviz::Display)

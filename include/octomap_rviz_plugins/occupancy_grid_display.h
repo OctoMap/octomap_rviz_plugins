@@ -43,6 +43,8 @@
 
 #include <octomap_msgs/Octomap.h>
 
+#include <octomap/OcTreeStamped.h>
+
 #include <rviz/display.h>
 #include "rviz/ogre_helpers/point_cloud.h"
 
@@ -52,7 +54,7 @@ namespace rviz {
 class RosTopicProperty;
 class IntProperty;
 class EnumProperty;
- class FloatProperty;
+class FloatProperty;
 }
 
 namespace octomap_rviz_plugin
@@ -88,7 +90,7 @@ protected:
   void subscribe();
   void unsubscribe();
 
-  void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);
+  virtual void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg) = 0;
 
   void setColor( double z_pos, double min_z, double max_z, double color_factor, rviz::PointCloud::Point& point);
 
@@ -123,6 +125,12 @@ protected:
   u_int32_t queue_size_;
   uint32_t messages_received_;
   double color_factor_;
+};
+
+template <typename OcTreeType>
+class TemplatedOccupancyGridDisplay: public OccupancyGridDisplay {
+protected:
+  void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);
 };
 
 } // namespace octomap_rviz_plugin

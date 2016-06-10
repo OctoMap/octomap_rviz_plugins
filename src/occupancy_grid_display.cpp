@@ -55,7 +55,7 @@
 
 //As in octomap_server/OctomapServer.h. 
 //Not taken from there, as this would introduce a build dependency
-//#define COLOR_OCTOMAP_SERVER 
+#define COLOR_OCTOMAP_SERVER 
 #ifdef COLOR_OCTOMAP_SERVER
 #include <octomap/ColorOcTree.h>
 #endif
@@ -329,16 +329,25 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
 
   // creating octree
   OcTreeT* octomap = NULL;
-  octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
-  if (tree){
+  if (octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg)){
     octomap = dynamic_cast<OcTreeT*>(tree);
-  }
+    if (!octomap)
+    {
+      if(msg->binary)
+        this->setStatusStd(StatusProperty::Error, "Message", "Failed to create binary octree structure");
+      else
+        this->setStatusStd(StatusProperty::Error, "Message", "Failed to create full octree structure");
 
-  if (!octomap)
+      this->setStatusStd(StatusProperty::Error, "Message2", msg->id.c_str());
+      return;
+    }
+  }
+  else
   {
-    this->setStatusStd(StatusProperty::Error, "Message", "Failed to create octree structure");
+    this->setStatusStd(StatusProperty::Error, "Message", "Wrong OcTree format (color/binary)");
     return;
   }
+
 
   std::size_t octree_depth = octomap->getTreeDepth();
   tree_depth_property_->setMax(octomap->getTreeDepth());
@@ -348,12 +357,6 @@ void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapCo
   double minX, minY, minZ, maxX, maxY, maxZ;
   octomap->getMetricMin(minX, minY, minZ);
   octomap->getMetricMax(maxX, maxY, maxZ);
-
-  max_height_property_->setMin(minZ);
-  max_height_property_->setMax(maxZ);
-
-  min_height_property_->setMin(minZ);
-  min_height_property_->setMax(maxZ);
 
   // reset rviz pointcloud classes
   for (std::size_t i = 0; i < max_octree_depth_; ++i)

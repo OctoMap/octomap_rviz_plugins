@@ -452,7 +452,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
   setStatusStd(StatusProperty::Ok, "Type", msg->id.c_str());
   if(!checkType(msg->id)){
-    setStatusStd(StatusProperty::Error, "Message", "Wrong octomap tpye. Use a different display type.");
+    setStatusStd(StatusProperty::Error, "Message", "Wrong octomap type. Use a different display type.");
     return;
   }
 
@@ -479,7 +479,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   if (tree){
     octomap = dynamic_cast<OcTreeType*>(tree);
     if(!octomap){
-      setStatusStd(StatusProperty::Error, "Message", "Wrong octomap tpye. Use a different display type.");
+      setStatusStd(StatusProperty::Error, "Message", "Wrong octomap type. Use a different display type.");
     }
   }
   else

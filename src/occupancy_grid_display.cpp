@@ -363,6 +363,33 @@ void OccupancyGridDisplay::updateTopic()
   context_->queueRender();
 }
 
+template <typename OcTreeType>
+bool TemplatedOccupancyGridDisplay<OcTreeType>::checkType(std::string type_id)
+{
+  //General case: Need to be specialized for every used case
+  setStatus(StatusProperty::Warn, "Messages", QString("Cannot verify octomap type"));
+  return true; //Try deserialization, might crash though
+}
+  
+template <>
+bool TemplatedOccupancyGridDisplay<octomap::OcTreeStamped>::checkType(std::string type_id)
+{
+  if(type_id == "OcTreeStamped") return true;
+  else return false;
+}
+template <>
+bool TemplatedOccupancyGridDisplay<octomap::OcTree>::checkType(std::string type_id)
+{
+  if(type_id == "OcTree") return true;
+  else return false;
+}
+
+template <>
+bool TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::checkType(std::string type_id)
+{
+  if(type_id == "ColorOcTree") return true;
+  else return false;
+}
 
 template <typename OcTreeType>
 void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(PointCloud::Point& newPoint, 
@@ -424,6 +451,10 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   ++messages_received_;
   setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
   setStatusStd(StatusProperty::Ok, "Type", msg->id.c_str());
+  if(!checkType(msg->id)){
+    setStatusStd(StatusProperty::Error, "Message", "Wrong octomap tpye. Use a different display type.");
+    return;
+  }
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
@@ -435,7 +466,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
     std::stringstream ss;
     ss << "Failed to transform from frame [" << msg->header.frame_id << "] to frame ["
         << context_->getFrameManager()->getFixedFrame() << "]";
-    this->setStatusStd(StatusProperty::Error, "Message", ss.str());
+    setStatusStd(StatusProperty::Error, "Message", ss.str());
     return;
   }
 
@@ -448,12 +479,12 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   if (tree){
     octomap = dynamic_cast<OcTreeType*>(tree);
     if(!octomap){
-      this->setStatusStd(StatusProperty::Error, "Message", "Wrong octomap tpye. Use a different display type.");
+      setStatusStd(StatusProperty::Error, "Message", "Wrong octomap tpye. Use a different display type.");
     }
   }
   else
   {
-    this->setStatusStd(StatusProperty::Error, "Message", "Failed to deserialize octree message.");
+    setStatusStd(StatusProperty::Error, "Message", "Failed to deserialize octree message.");
     return;
   }
 

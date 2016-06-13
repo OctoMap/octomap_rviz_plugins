@@ -133,6 +133,9 @@ class TemplatedOccupancyGridDisplay: public OccupancyGridDisplay {
 protected:
   void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);
   void setVoxelColor(rviz::PointCloud::Point& newPoint, typename OcTreeType::NodeType& node, double minZ, double maxZ);
+  ///Returns false, if the type_id (of the message) does not correspond to the template paramter
+  ///of this class, true if correct or unknown (i.e., no specialized method for that template).
+  bool checkType(std::string type_id);
 };
 
 } // namespace octomap_rviz_plugin

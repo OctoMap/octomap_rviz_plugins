@@ -47,24 +47,14 @@
 #include "rviz/properties/float_property.h"
 
 #include <octomap/octomap.h>
+#include <octomap/ColorOcTree.h>
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
 
 
 #include <sstream>
 
-//As in octomap_server/OctomapServer.h. 
-//Not taken from there, as this would introduce a build dependency
-#define COLOR_OCTOMAP_SERVER 
-#ifdef COLOR_OCTOMAP_SERVER
-#include <octomap/ColorOcTree.h>
-#endif
 
-#ifdef COLOR_OCTOMAP_SERVER
-  typedef octomap::ColorOcTree OcTreeT;
-#else
-  typedef octomap::OcTree OcTreeT;
-#endif
 using namespace rviz;
 
 namespace octomap_rviz_plugin
@@ -457,10 +447,13 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
   if (tree){
     octomap = dynamic_cast<OcTreeType*>(tree);
+    if(!octomap){
+      this->setStatusStd(StatusProperty::Error, "Message", "Wrong octomap tpye. Use a different display type.");
+    }
   }
   else
   {
-    this->setStatusStd(StatusProperty::Error, "Message", "Failed to parse octree message.");
+    this->setStatusStd(StatusProperty::Error, "Message", "Failed to deserialize octree message.");
     return;
   }
 

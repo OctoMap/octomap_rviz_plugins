@@ -80,9 +80,7 @@ enum OctreeVoxelRenderMode
 
 enum OctreeVoxelColorMode
 {
-#ifdef COLOR_OCTOMAP_SERVER
   OCTOMAP_CELL_COLOR,
-#endif
   OCTOMAP_Z_AXIS_COLOR,
   OCTOMAP_PROBABLILTY_COLOR,
 };
@@ -125,9 +123,7 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                                 this,
                                                 SLOT( updateOctreeColorMode() ) );
 
-#ifdef COLOR_OCTOMAP_SERVER
   octree_coloring_property_->addOption( "Cell Color",  OCTOMAP_CELL_COLOR );
-#endif
   octree_coloring_property_->addOption( "Z-Axis",  OCTOMAP_Z_AXIS_COLOR );
   octree_coloring_property_->addOption( "Cell Probability",  OCTOMAP_PROBABLILTY_COLOR );
   alpha_property_ = new rviz::FloatProperty( "Voxel Alpha", 1.0, "Set voxel transparency alpha",
@@ -305,184 +301,6 @@ void OccupancyGridDisplay::setColor(double z_pos, double min_z, double max_z, do
   }
 }
 
-void OccupancyGridDisplay::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
-{
-  ++messages_received_;
-  setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
-
-  ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
-
-  // get tf transform
-  Ogre::Vector3 pos;
-  Ogre::Quaternion orient;
-  if (!context_->getFrameManager()->getTransform(msg->header, pos, orient))
-  {
-    std::stringstream ss;
-    ss << "Failed to transform from frame [" << msg->header.frame_id << "] to frame ["
-        << context_->getFrameManager()->getFixedFrame() << "]";
-    this->setStatusStd(StatusProperty::Error, "Message", ss.str());
-    return;
-  }
-
-  scene_node_->setOrientation(orient);
-  scene_node_->setPosition(pos);
-
-  // creating octree
-  OcTreeT* octomap = NULL;
-  if (octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg)){
-    octomap = dynamic_cast<OcTreeT*>(tree);
-    if (!octomap)
-    {
-      if(msg->binary)
-        this->setStatusStd(StatusProperty::Error, "Message", "Failed to create binary octree structure");
-      else
-        this->setStatusStd(StatusProperty::Error, "Message", "Failed to create full octree structure");
-
-      this->setStatusStd(StatusProperty::Error, "Message2", msg->id.c_str());
-      return;
-    }
-  }
-  else
-  {
-    this->setStatusStd(StatusProperty::Error, "Message", "Wrong OcTree format (color/binary)");
-    return;
-  }
-
-
-  std::size_t octree_depth = octomap->getTreeDepth();
-  tree_depth_property_->setMax(octomap->getTreeDepth());
-  
-
-  // get dimensions of octree
-  double minX, minY, minZ, maxX, maxY, maxZ;
-  octomap->getMetricMin(minX, minY, minZ);
-  octomap->getMetricMax(maxX, maxY, maxZ);
-
-  // reset rviz pointcloud classes
-  for (std::size_t i = 0; i < max_octree_depth_; ++i)
-  {
-    point_buf_[i].clear();
-    box_size_[i] = octomap->getNodeSize(i + 1);
-  }
-
-  size_t pointCount = 0;
-  {
-    // traverse all leafs in the tree:
-    unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
-    double maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
-    double minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
-    for (OcTreeT::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
-    {
-
-      if (octomap->isNodeOccupied(*it))
-      {
-        if(it.getZ() <= maxHeight && it.getZ() >= minHeight)
-        {
-          int render_mode_mask = octree_render_property_->getOptionInt();
-
-          bool display_voxel = false;
-
-          // the left part evaluates to 1 for free voxels and 2 for occupied voxels
-          if (((int)octomap->isNodeOccupied(*it) + 1) & render_mode_mask)
-          {
-            // check if current voxel has neighbors on all sides -> no need to be displayed
-            bool allNeighborsFound = true;
-
-            octomap::OcTreeKey key;
-            octomap::OcTreeKey nKey = it.getKey();
-
-            for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
-            {
-              for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
-              {
-                for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
-                {
-                  if (key != nKey)
-                  {
-                    octomap::OcTreeNode* node = octomap->search(key);
-
-                    // the left part evaluates to 1 for free voxels and 2 for occupied voxels
-                    if (!(node && ((((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask)))
-                    {
-                      // we do not have a neighbor => break!
-                      allNeighborsFound = false;
-                    }
-                  }
-                }
-              }
-            }
-
-            display_voxel |= !allNeighborsFound;
-          }
-
-
-          if (display_voxel)
-          {
-            PointCloud::Point newPoint;
-
-            newPoint.position.x = it.getX();
-            newPoint.position.y = it.getY();
-            newPoint.position.z = it.getZ();
-
-            float cell_probability;
-
-            OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
-
-            switch (octree_color_mode)
-            {
-#ifdef COLOR_OCTOMAP_SERVER
-              case OCTOMAP_CELL_COLOR:
-              {
-                if(octomap::ColorOcTreeNode* node = dynamic_cast<octomap::ColorOcTreeNode*>(&*it))
-                {
-                  const float b2f = 1./256.; 
-                  octomap::ColorOcTreeNode::Color& color = node->getColor();
-                  newPoint.setColor(b2f*color.r, b2f*color.g, b2f*color.b, it->getOccupancy());
-                  break;
-                }
-                else 
-                { 
-                  setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
-                  octree_color_mode = OCTOMAP_Z_AXIS_COLOR; //Fallback 
-                }
-                //Intentional fall-through for else-case
-              }
-#endif
-              case OCTOMAP_Z_AXIS_COLOR:
-                setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
-                break;
-              case OCTOMAP_PROBABLILTY_COLOR:
-                cell_probability = it->getOccupancy();
-                newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
-                break;
-              default:
-                break;
-            }
-
-            // push to point vectors
-            unsigned int depth = it.getDepth();
-            point_buf_[depth - 1].push_back(newPoint);
-
-            ++pointCount;
-          }
-        }
-      }
-    }
-  }
-
-  if (pointCount)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    new_points_received_ = true;
-
-    for (size_t i = 0; i < max_octree_depth_; ++i)
-      new_points_[i].swap(point_buf_[i]);
-
-  }
-  delete octomap;
-}
-
 void OccupancyGridDisplay::updateTreeDepth()
 {
 }
@@ -524,7 +342,7 @@ void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
   if (new_points_received_)
   {
     boost::mutex::scoped_lock lock(mutex_);
-    
+
     for (size_t i = 0; i < max_octree_depth_; ++i)
     {
       double size = box_size_[i];
@@ -556,9 +374,208 @@ void OccupancyGridDisplay::updateTopic()
 }
 
 
+template <typename OcTreeType>
+void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(PointCloud::Point& newPoint, 
+                                                              typename OcTreeType::NodeType& node,
+                                                              double minZ, double maxZ)
+{
+  OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
+  float cell_probability;
+  switch (octree_color_mode)
+  {
+    case OCTOMAP_CELL_COLOR:
+      setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
+      //Intentional fall-through for else-case
+    case OCTOMAP_Z_AXIS_COLOR:
+      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      break;
+    case OCTOMAP_PROBABLILTY_COLOR:
+      cell_probability = node.getOccupancy();
+      newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
+      break;
+    default:
+      break;
+  }
+}
+
+//Specialization for ColorOcTreeNode, which can set the voxel color from the node itself
+template <>
+void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointCloud::Point& newPoint, 
+                                                                      octomap::ColorOcTree::NodeType& node,
+                                                                      double minZ, double maxZ)
+{
+  float cell_probability;
+  OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
+  switch (octree_color_mode)
+  {
+    case OCTOMAP_CELL_COLOR:
+    {
+      const float b2f = 1./256.; 
+      octomap::ColorOcTreeNode::Color& color = node.getColor();
+      newPoint.setColor(b2f*color.r, b2f*color.g, b2f*color.b, node.getOccupancy());
+      break;
+    }
+    case OCTOMAP_Z_AXIS_COLOR:
+      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      break;
+    case OCTOMAP_PROBABLILTY_COLOR:
+      cell_probability = node.getOccupancy();
+      newPoint.setColor((1.0f-cell_probability), cell_probability, 0.0);
+      break;
+    default:
+      break;
+  }
+}
+
+
+template <typename OcTreeType>
+void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
+{
+  ++messages_received_;
+  setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " octomap messages received");
+  setStatusStd(StatusProperty::Ok, "Type", msg->id.c_str());
+
+  ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
+
+  // get tf transform
+  Ogre::Vector3 pos;
+  Ogre::Quaternion orient;
+  if (!context_->getFrameManager()->getTransform(msg->header, pos, orient))
+  {
+    std::stringstream ss;
+    ss << "Failed to transform from frame [" << msg->header.frame_id << "] to frame ["
+        << context_->getFrameManager()->getFixedFrame() << "]";
+    this->setStatusStd(StatusProperty::Error, "Message", ss.str());
+    return;
+  }
+
+  scene_node_->setOrientation(orient);
+  scene_node_->setPosition(pos);
+
+  // creating octree
+  OcTreeType* octomap = NULL;
+  octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
+  if (tree){
+    octomap = dynamic_cast<OcTreeType*>(tree);
+  }
+  else
+  {
+    this->setStatusStd(StatusProperty::Error, "Message", "Failed to parse octree message.");
+    return;
+  }
+
+
+  std::size_t octree_depth = octomap->getTreeDepth();
+  tree_depth_property_->setMax(octomap->getTreeDepth());
+
+
+  // get dimensions of octree
+  double minX, minY, minZ, maxX, maxY, maxZ;
+  octomap->getMetricMin(minX, minY, minZ);
+  octomap->getMetricMax(maxX, maxY, maxZ);
+
+  // reset rviz pointcloud classes
+  for (std::size_t i = 0; i < max_octree_depth_; ++i)
+  {
+    point_buf_[i].clear();
+    box_size_[i] = octomap->getNodeSize(i + 1);
+  }
+
+  size_t pointCount = 0;
+  {
+    // traverse all leafs in the tree:
+    unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
+    double maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
+    double minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
+    for (typename OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+    {
+
+      if (octomap->isNodeOccupied(*it))
+      {
+        if(it.getZ() <= maxHeight && it.getZ() >= minHeight)
+        {
+          int render_mode_mask = octree_render_property_->getOptionInt();
+
+          bool display_voxel = false;
+
+          // the left part evaluates to 1 for free voxels and 2 for occupied voxels
+          if (((int)octomap->isNodeOccupied(*it) + 1) & render_mode_mask)
+          {
+            // check if current voxel has neighbors on all sides -> no need to be displayed
+            bool allNeighborsFound = true;
+
+            octomap::OcTreeKey key;
+            octomap::OcTreeKey nKey = it.getKey();
+
+            for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
+            {
+              for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
+              {
+                for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
+                {
+                  if (key != nKey)
+                  {
+                    typename OcTreeType::NodeType* node = octomap->search(key);
+
+                    // the left part evaluates to 1 for free voxels and 2 for occupied voxels
+                    if (!(node && ((((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask)))
+                    {
+                      // we do not have a neighbor => break!
+                      allNeighborsFound = false;
+                    }
+                  }
+                }
+              }
+            }
+
+            display_voxel |= !allNeighborsFound;
+          }
+
+
+          if (display_voxel)
+          {
+            PointCloud::Point newPoint;
+
+            newPoint.position.x = it.getX();
+            newPoint.position.y = it.getY();
+            newPoint.position.z = it.getZ();
+
+
+
+            setVoxelColor(newPoint, *it, minZ, maxZ);
+            // push to point vectors
+            unsigned int depth = it.getDepth();
+            point_buf_[depth - 1].push_back(newPoint);
+
+            ++pointCount;
+          }
+        }
+      }
+    }
+  }
+
+  if (pointCount)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    new_points_received_ = true;
+
+    for (size_t i = 0; i < max_octree_depth_; ++i)
+      new_points_[i].swap(point_buf_[i]);
+
+  }
+  delete octomap;
+}
+
 } // namespace octomap_rviz_plugin
 
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS( octomap_rviz_plugin::OccupancyGridDisplay, rviz::Display)
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTree> OcTreeGridDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::ColorOcTree> ColorOcTreeGridDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTreeStamped> OcTreeStampedGridDisplay;
+
+PLUGINLIB_EXPORT_CLASS( OcTreeGridDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS( ColorOcTreeGridDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS( OcTreeStampedGridDisplay, rviz::Display)
 

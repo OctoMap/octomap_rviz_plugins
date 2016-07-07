@@ -132,16 +132,17 @@ void OccupancyMapDisplay::unsubscribe()
 }
 
 
-void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
+template <typename OcTreeType>
+void TemplatedOccupancyMapDisplay<OcTreeType>::handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg)
 {
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
   // creating octree
-  octomap::OcTree* octomap = NULL;
+  OcTreeType* octomap = NULL;
   octomap::AbstractOcTree* tree = octomap_msgs::msgToMap(*msg);
   if (tree){
-    octomap = dynamic_cast<octomap::OcTree*>(tree);
+    octomap = dynamic_cast<OcTreeType*>(tree);
   }
 
   if (!octomap)
@@ -172,14 +173,14 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
   occupancy_map->info.width = width = (maxX-minX) / res + 1;
   occupancy_map->info.height = height = (maxY-minY) / res + 1;
   occupancy_map->info.origin.position.x = minX  - (res / (float)(1<<ds_shift) ) + res;
-  occupancy_map->info.origin.position.y = minY  - (res / (float)(1<<ds_shift) );;
+  occupancy_map->info.origin.position.y = minY  - (res / (float)(1<<ds_shift) );
 
   occupancy_map->data.clear();
   occupancy_map->data.resize(width*height, -1);
 
     // traverse all leafs in the tree:
   unsigned int treeDepth = std::min<unsigned int>(octree_depth_, octomap->getTreeDepth());
-  for (octomap::OcTree::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
+  for (typename OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
   {
     bool occupied = octomap->isNodeOccupied(*it);
     int intSize = 1 << (octree_depth_ - it.getDepth());
@@ -218,4 +219,8 @@ void OccupancyMapDisplay::handleOctomapBinaryMessage(const octomap_msgs::Octomap
 } // namespace rviz
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS( octomap_rviz_plugin::OccupancyMapDisplay, rviz::Display)
+typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTree> OcTreeMapDisplay;
+typedef octomap_rviz_plugin::TemplatedOccupancyMapDisplay<octomap::OcTreeStamped> OcTreeStampedMapDisplay;
+
+PLUGINLIB_EXPORT_CLASS( OcTreeMapDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS( OcTreeStampedMapDisplay, rviz::Display)

@@ -1,11 +1,14 @@
 <package>
   <name>octomap_rviz_plugins</name>
-  <version>0.0.5</version>
+  <version>0.1.0</version>
     <description>
      A set of plugins for displaying occupancy information decoded from binary octomap messages. 
     </description>
 
-  <maintainer email="jkammerl@willowgarage.com">Julius Kammerl</maintainer>
+  <maintainer email="armin@hornung.io">Armin Hornung</maintainer>
+  
+  <url type="website">http://ros.org/wiki/octomap_rviz_plugins</url>
+  <url type="bugtracker">https://github.com/OctoMap/octomap_rviz_plugins/issues</url>
 
   <license>BSD</license>
 

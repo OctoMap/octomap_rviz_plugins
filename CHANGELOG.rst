@@ -1,3 +1,12 @@
+0.1.0 (2016-07-07)
+------------------
+* Remove -ldefault_plugin from linker options, fixes `#19 <https://github.com/OctoMap/octomap_rviz_plugins/issues/19>`_
+* Support for displaying ColorOcTree and OcTreeStamped, templated rviz plugins 
+* Trim Z values in the octomap visualization
+* Add alpha property to OccupancyGridDisplay
+* add fix for qt moc BOOST_JOIN problem for osx yosemite build
+* Contributors: Armin Hornung, Felix Endres, Gautham Manoharan, Javier V. Gómez, Oleksandr Lavrushchenko, Ryohei Ueda
+
 0.0.5 (2013-09-06)
 ------------------
 * fix a crash when the destructor is called before onInitialize

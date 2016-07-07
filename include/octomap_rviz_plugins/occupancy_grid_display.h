@@ -33,6 +33,7 @@
 #ifndef RVIZ_OCCUPANCY_GRID_DISPLAY_H
 #define RVIZ_OCCUPANCY_GRID_DISPLAY_H
 
+#ifndef Q_MOC_RUN 
 #include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
@@ -42,13 +43,19 @@
 
 #include <octomap_msgs/Octomap.h>
 
+#include <octomap/OcTreeStamped.h>
+#include <octomap/ColorOcTree.h>
+
 #include <rviz/display.h>
 #include "rviz/ogre_helpers/point_cloud.h"
+
+#endif
 
 namespace rviz {
 class RosTopicProperty;
 class IntProperty;
 class EnumProperty;
+class FloatProperty;
 }
 
 namespace octomap_rviz_plugin
@@ -72,7 +79,9 @@ private Q_SLOTS:
   void updateTreeDepth();
   void updateOctreeRenderMode();
   void updateOctreeColorMode();
-
+  void updateAlpha();
+  void updateMaxHeight();
+  void updateMinHeight();
 
 protected:
   // overrides from Display
@@ -82,7 +91,7 @@ protected:
   void subscribe();
   void unsubscribe();
 
-  void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);
+  virtual void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg) = 0;
 
   void setColor( double z_pos, double min_z, double max_z, double color_factor, rviz::PointCloud::Point& point);
 
@@ -110,11 +119,23 @@ protected:
   rviz::EnumProperty* octree_render_property_;
   rviz::EnumProperty* octree_coloring_property_;
   rviz::IntProperty* tree_depth_property_;
+  rviz::FloatProperty* alpha_property_;
+  rviz::FloatProperty* max_height_property_;
+  rviz::FloatProperty* min_height_property_;
 
   u_int32_t queue_size_;
-  std::size_t octree_depth_;
   uint32_t messages_received_;
   double color_factor_;
+};
+
+template <typename OcTreeType>
+class TemplatedOccupancyGridDisplay: public OccupancyGridDisplay {
+protected:
+  void incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg);
+  void setVoxelColor(rviz::PointCloud::Point& newPoint, typename OcTreeType::NodeType& node, double minZ, double maxZ);
+  ///Returns false, if the type_id (of the message) does not correspond to the template paramter
+  ///of this class, true if correct or unknown (i.e., no specialized method for that template).
+  bool checkType(std::string type_id);
 };
 
 } // namespace octomap_rviz_plugin

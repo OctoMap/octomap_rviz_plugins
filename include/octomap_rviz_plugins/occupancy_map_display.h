@@ -33,6 +33,8 @@
 #ifndef RVIZ_OCCUPANCY_MAP_DISPLAY_H
 #define RVIZ_OCCUPANCY_MAP_DISPLAY_H
 
+#ifndef Q_MOC_RUN 
+
 #include <qobject.h>
 
 #include <ros/ros.h>
@@ -41,8 +43,11 @@
 
 #include <octomap_msgs/Octomap.h>
 
+#include <octomap/OcTreeStamped.h>
+
 #include <message_filters/subscriber.h>
 
+#endif
 
 namespace octomap_rviz_plugin
 {
@@ -63,13 +68,18 @@ protected:
   virtual void subscribe();
   virtual void unsubscribe();
 
-  void handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg);
+  virtual void handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg) = 0;
 
   boost::shared_ptr<message_filters::Subscriber<octomap_msgs::Octomap> > sub_;
 
   unsigned int octree_depth_;
   rviz::IntProperty* tree_depth_property_;
+};
 
+template <typename OcTreeType>
+class TemplatedOccupancyMapDisplay: public OccupancyMapDisplay {
+protected:
+    void handleOctomapBinaryMessage(const octomap_msgs::OctomapConstPtr& msg);
 };
 
 } // namespace rviz

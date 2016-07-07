@@ -1,0 +1,12 @@
+Source: ros-kinetic-octomap-rviz-plugins
+Section: misc
+Priority: extra
+Maintainer: Armin Hornung <armin@hornung.io>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin, ros-kinetic-octomap, ros-kinetic-octomap-msgs, ros-kinetic-roscpp, ros-kinetic-rviz
+Homepage: http://ros.org/wiki/octomap_rviz_plugins
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-octomap-rviz-plugins
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-octomap, ros-kinetic-octomap-msgs, ros-kinetic-roscpp, ros-kinetic-rviz
+Description: A set of plugins for displaying occupancy information decoded from binary octomap messages.

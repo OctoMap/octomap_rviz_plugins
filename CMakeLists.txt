@@ -10,8 +10,8 @@ find_package(catkin REQUIRED COMPONENTS octomap_msgs
 find_package(octomap REQUIRED)
 find_package(Boost REQUIRED COMPONENTS thread )
 
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-include(${QT_USE_FILE})
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+set(QT_LIBRARIES Qt5::Widgets)
 
 add_definitions(-DQT_NO_KEYWORDS)
 
@@ -35,7 +35,7 @@ link_directories(${catkin_LIBRARY_DIRS}
                  ${OCTOMAP_LIBRARY_DIRS}) 
 
 
-QT4_WRAP_CPP(MOC_FILES
+QT5_WRAP_CPP(MOC_FILES
   include/octomap_rviz_plugins/occupancy_grid_display.h
   include/octomap_rviz_plugins/occupancy_map_display.h
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED -DBOOST_LEXICAL_CAST_INCLUDED 

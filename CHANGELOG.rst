@@ -1,5 +1,5 @@
-Forthcoming
------------
+0.2.0 (2016-07-10)
+------------------
 * Fix: RViz uses Qt5 in kinetic
 * Contributors: Armin Hornung
 

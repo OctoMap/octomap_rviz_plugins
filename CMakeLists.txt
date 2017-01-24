@@ -4,7 +4,7 @@ project(octomap_rviz_plugins)
 find_package(catkin REQUIRED COMPONENTS octomap_msgs
                                         roscpp
                                         rviz
-                                        
+                                        std_srvs                                        
 )
 
 find_package(octomap REQUIRED)
@@ -38,17 +38,19 @@ link_directories(${catkin_LIBRARY_DIRS}
 QT4_WRAP_CPP(MOC_FILES
   include/octomap_rviz_plugins/occupancy_grid_display.h
   include/octomap_rviz_plugins/occupancy_map_display.h
+  include/octomap_rviz_plugins/octomap_server_control.h
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED -DBOOST_LEXICAL_CAST_INCLUDED 
 )
 
 set(SOURCE_FILES
   src/occupancy_grid_display.cpp
   src/occupancy_map_display.cpp
+  src/octomap_server_control.cpp
   ${MOC_FILES} 
 )
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} ${rviz_DEFAULT_PLUGIN_LIBRARIES})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -63,5 +65,3 @@ install(TARGETS ${PROJECT_NAME}
 install(FILES plugin_description.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-

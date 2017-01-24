@@ -1,3 +1,7 @@
+0.?.? (2017-??-??)
+------------------
+* Add OctomapServerControl Panel to trigger resetting the octomap from rviz.
+
 0.1.0 (2016-07-07)
 ------------------
 * Remove -ldefault_plugin from linker options, fixes `#19 <https://github.com/OctoMap/octomap_rviz_plugins/issues/19>`_

@@ -1,4 +1,3 @@
-
 <library path="lib/liboctomap_rviz_plugins">
   <class name="octomap_rviz_plugin/OccupancyGrid"
          type="OcTreeGridDisplay"
@@ -36,5 +35,11 @@
       Displays projected 2D occupancy maps generated from compressed octomap messages.
     </description>
   </class>
+  <class name="octomap_rviz_plugin/OctomapServerControl"
+         type="OctomapServerControl"
+         base_class_type="rviz::Panel">
+    <description>
+      Buttons to trigger OctomapServer services.
+    </description>
+  </class>
 </library>
-  

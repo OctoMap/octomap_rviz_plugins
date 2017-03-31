@@ -121,6 +121,12 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                              SLOT( updateAlpha() ) );
   alpha_property_->setMin(0.0);
   alpha_property_->setMax(1.0);
+  occupancy_threshold_property_ = new rviz::FloatProperty( "Occupancy Threshold", 0.5,
+                                                 "Defines the minimum probability for voxels to be in state \"occupied\".",
+                                                 this,
+                                                 SLOT( updateOccupancyThreshold() ) );
+  occupancy_threshold_property_->setMin(0.0);
+  occupancy_threshold_property_->setMax(1.0);
 
   tree_depth_property_ = new IntProperty("Max. Octree Depth",
                                          max_octree_depth_,
@@ -300,6 +306,10 @@ void OccupancyGridDisplay::updateOctreeRenderMode()
 }
 
 void OccupancyGridDisplay::updateOctreeColorMode()
+{
+}
+
+void OccupancyGridDisplay::updateOccupancyThreshold()
 {
 }
 
@@ -492,11 +502,11 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   std::size_t octree_depth = octomap->getTreeDepth();
   tree_depth_property_->setMax(octomap->getTreeDepth());
 
-
   // get dimensions of octree
   double minX, minY, minZ, maxX, maxY, maxZ;
   octomap->getMetricMin(minX, minY, minZ);
   octomap->getMetricMax(maxX, maxY, maxZ);
+  octomap->setOccupancyThres(occupancy_threshold_property_->getFloat());
 
   // reset rviz pointcloud classes
   for (std::size_t i = 0; i < max_octree_depth_; ++i)

@@ -80,6 +80,7 @@ private Q_SLOTS:
   void updateOctreeRenderMode();
   void updateOctreeColorMode();
   void updateAlpha();
+  void updateOccupancyThreshold();
   void updateMaxHeight();
   void updateMinHeight();
 
@@ -120,6 +121,7 @@ protected:
   rviz::EnumProperty* octree_coloring_property_;
   rviz::IntProperty* tree_depth_property_;
   rviz::FloatProperty* alpha_property_;
+  rviz::FloatProperty* occupancy_threshold_property_;
   rviz::FloatProperty* max_height_property_;
   rviz::FloatProperty* min_height_property_;
 

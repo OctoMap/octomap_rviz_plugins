@@ -408,13 +408,17 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(PointCloud::Point&
 {
   OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
   float cell_probability;
+  double maxHeight;
+  double minHeight;
   switch (octree_color_mode)
   {
     case OCTOMAP_CELL_COLOR:
       setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
       //Intentional fall-through for else-case
     case OCTOMAP_Z_AXIS_COLOR:
-      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
+      minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
+      setColor(newPoint.position.z, minHeight, maxHeight, color_factor_, newPoint);
       break;
     case OCTOMAP_PROBABLILTY_COLOR:
       cell_probability = node.getOccupancy();
@@ -432,6 +436,8 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
                                                                       double minZ, double maxZ)
 {
   float cell_probability;
+  double maxHeight;
+  double minHeight;
   OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
   switch (octree_color_mode)
   {
@@ -443,7 +449,9 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
       break;
     }
     case OCTOMAP_Z_AXIS_COLOR:
-      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
+      minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
+      setColor(newPoint.position.z, minHeight, maxHeight, color_factor_, newPoint);
       break;
     case OCTOMAP_PROBABLILTY_COLOR:
       cell_probability = node.getOccupancy();

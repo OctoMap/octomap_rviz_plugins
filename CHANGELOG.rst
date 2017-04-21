@@ -1,3 +1,8 @@
+Forthcoming
+-----------
+* Add occupancy threshold property to OccupancyGridDisplay
+* When using the Z value trimming, reduce the color range to the trimmed range
+
 0.1.0 (2016-07-07)
 ------------------
 * Remove -ldefault_plugin from linker options, fixes `#19 <https://github.com/OctoMap/octomap_rviz_plugins/issues/19>`_

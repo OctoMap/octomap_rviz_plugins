@@ -121,6 +121,12 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                              SLOT( updateAlpha() ) );
   alpha_property_->setMin(0.0);
   alpha_property_->setMax(1.0);
+  occupancy_threshold_property_ = new rviz::FloatProperty( "Occupancy Threshold", 0.5,
+                                                 "Defines the minimum probability for voxels to be in state \"occupied\".",
+                                                 this,
+                                                 SLOT( updateOccupancyThreshold() ) );
+  occupancy_threshold_property_->setMin(0.0);
+  occupancy_threshold_property_->setMax(1.0);
 
   tree_depth_property_ = new IntProperty("Max. Octree Depth",
                                          max_octree_depth_,
@@ -303,6 +309,10 @@ void OccupancyGridDisplay::updateOctreeColorMode()
 {
 }
 
+void OccupancyGridDisplay::updateOccupancyThreshold()
+{
+}
+
 void OccupancyGridDisplay::updateAlpha()
 {
 }
@@ -398,13 +408,17 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(PointCloud::Point&
 {
   OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
   float cell_probability;
+  double maxHeight;
+  double minHeight;
   switch (octree_color_mode)
   {
     case OCTOMAP_CELL_COLOR:
       setStatus(StatusProperty::Error, "Messages", QString("Cannot extract color"));
       //Intentional fall-through for else-case
     case OCTOMAP_Z_AXIS_COLOR:
-      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
+      minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
+      setColor(newPoint.position.z, minHeight, maxHeight, color_factor_, newPoint);
       break;
     case OCTOMAP_PROBABLILTY_COLOR:
       cell_probability = node.getOccupancy();
@@ -422,6 +436,8 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
                                                                       double minZ, double maxZ)
 {
   float cell_probability;
+  double maxHeight;
+  double minHeight;
   OctreeVoxelColorMode octree_color_mode = static_cast<OctreeVoxelColorMode>(octree_coloring_property_->getOptionInt());
   switch (octree_color_mode)
   {
@@ -433,7 +449,9 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
       break;
     }
     case OCTOMAP_Z_AXIS_COLOR:
-      setColor(newPoint.position.z, minZ, maxZ, color_factor_, newPoint);
+      maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
+      minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
+      setColor(newPoint.position.z, minHeight, maxHeight, color_factor_, newPoint);
       break;
     case OCTOMAP_PROBABLILTY_COLOR:
       cell_probability = node.getOccupancy();
@@ -492,11 +510,11 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   std::size_t octree_depth = octomap->getTreeDepth();
   tree_depth_property_->setMax(octomap->getTreeDepth());
 
-
   // get dimensions of octree
   double minX, minY, minZ, maxX, maxY, maxZ;
   octomap->getMetricMin(minX, minY, minZ);
   octomap->getMetricMax(maxX, maxY, maxZ);
+  octomap->setOccupancyThres(occupancy_threshold_property_->getFloat());
 
   // reset rviz pointcloud classes
   for (std::size_t i = 0; i < max_octree_depth_; ++i)

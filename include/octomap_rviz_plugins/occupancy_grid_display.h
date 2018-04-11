@@ -97,6 +97,8 @@ protected:
 
   void clear();
 
+  virtual bool updateFromTF();
+
   typedef std::vector<rviz::PointCloud::Point> VPoint;
   typedef std::vector<VPoint> VVPoint;
 
@@ -112,6 +114,7 @@ protected:
   // Ogre-rviz point clouds
   std::vector<rviz::PointCloud*> cloud_;
   std::vector<double> box_size_;
+  std_msgs::Header header_;
 
   // Plugin properties
   rviz::IntProperty* queue_size_property_;

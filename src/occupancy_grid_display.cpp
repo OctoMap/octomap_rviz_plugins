@@ -346,6 +346,7 @@ void OccupancyGridDisplay::update(float wall_dt, float ros_dt)
     }
     new_points_received_ = false;
   }
+  updateFromTF();
 }
 
 void OccupancyGridDisplay::reset()
@@ -445,6 +446,21 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(PointClo
 }
 
 
+bool OccupancyGridDisplay::updateFromTF()
+{
+    // get tf transform
+    Ogre::Vector3 pos;
+    Ogre::Quaternion orient;
+    if (!context_->getFrameManager()->getTransform(header_, pos, orient)) {
+      return false;
+    }
+
+    scene_node_->setOrientation(orient);
+    scene_node_->setPosition(pos);
+    return true;
+}
+
+
 template <typename OcTreeType>
 void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const octomap_msgs::OctomapConstPtr& msg)
 {
@@ -458,20 +474,14 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
 
   ROS_DEBUG("Received OctomapBinary message (size: %d bytes)", (int)msg->data.size());
 
-  // get tf transform
-  Ogre::Vector3 pos;
-  Ogre::Quaternion orient;
-  if (!context_->getFrameManager()->getTransform(msg->header, pos, orient))
-  {
-    std::stringstream ss;
-    ss << "Failed to transform from frame [" << msg->header.frame_id << "] to frame ["
-        << context_->getFrameManager()->getFixedFrame() << "]";
-    setStatusStd(StatusProperty::Error, "Message", ss.str());
-    return;
+  header_ = msg->header;
+  if (!updateFromTF()) {
+      std::stringstream ss;
+      ss << "Failed to transform from frame [" << header_.frame_id << "] to frame ["
+          << context_->getFrameManager()->getFixedFrame() << "]";
+      setStatusStd(StatusProperty::Error, "Message", ss.str());
+      return;
   }
-
-  scene_node_->setOrientation(orient);
-  scene_node_->setPosition(pos);
 
   // creating octree
   OcTreeType* octomap = NULL;

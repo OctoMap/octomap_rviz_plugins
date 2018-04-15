@@ -489,9 +489,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
   }
 
 
-  std::size_t octree_depth = octomap->getTreeDepth();
   tree_depth_property_->setMax(octomap->getTreeDepth());
-
 
   // get dimensions of octree
   double minX, minY, minZ, maxX, maxY, maxZ;
@@ -511,11 +509,9 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
     unsigned int treeDepth = std::min<unsigned int>(tree_depth_property_->getInt(), octomap->getTreeDepth());
     double maxHeight = std::min<double>(max_height_property_->getFloat(), maxZ);
     double minHeight = std::max<double>(min_height_property_->getFloat(), minZ);
+    int stepSize = 1 << (octomap->getTreeDepth() - treeDepth); // for pruning of occluded voxels
     for (typename OcTreeType::iterator it = octomap->begin(treeDepth), end = octomap->end(); it != end; ++it)
     {
-
-      if (octomap->isNodeOccupied(*it))
-      {
         if(it.getZ() <= maxHeight && it.getZ() >= minHeight)
         {
           int render_mode_mask = octree_render_property_->getOptionInt();
@@ -531,15 +527,27 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
             octomap::OcTreeKey key;
             octomap::OcTreeKey nKey = it.getKey();
 
-            for (key[2] = nKey[2] - 1; allNeighborsFound && key[2] <= nKey[2] + 1; ++key[2])
+            // determine indices of potentially neighboring voxels for depths < maximum tree depth
+            // +/-1 at maximum depth, +2^(depth_difference-1) and -2^(depth_difference-1)-1 on other depths
+            int diffBase = (it.getDepth() < octomap->getTreeDepth()) ? 1 << (octomap->getTreeDepth() - it.getDepth() - 1) : 1;
+            int diff[2] = {-((it.getDepth() == octomap->getTreeDepth()) ? diffBase : diffBase + 1), diffBase};
+
+            // cells with adjacent faces can occlude a voxel, iterate over the cases x,y,z (idxCase) and +/- (diff)
+            for (unsigned int idxCase = 0; idxCase < 3; ++idxCase)
             {
-              for (key[1] = nKey[1] - 1; allNeighborsFound && key[1] <= nKey[1] + 1; ++key[1])
+              int idx_0 = idxCase % 3;
+              int idx_1 = (idxCase + 1) % 3;
+              int idx_2 = (idxCase + 2) % 3;
+
+              for (int i = 0; allNeighborsFound && i < 2; ++i)
               {
-                for (key[0] = nKey[0] - 1; allNeighborsFound && key[0] <= nKey[0] + 1; ++key[0])
+                key[idx_0] = nKey[idx_0] + diff[i];
+                // if rendering is restricted to treeDepth < maximum tree depth inner nodes with distance stepSize can already occlude a voxel
+                for (key[idx_1] = nKey[idx_1] + diff[0] + 1; allNeighborsFound && key[idx_1] < nKey[idx_1] + diff[1]; key[idx_1] += stepSize)
                 {
-                  if (key != nKey)
+                  for (key[idx_2] = nKey[idx_2] + diff[0] + 1; allNeighborsFound && key[idx_2] < nKey[idx_2] + diff[1]; key[idx_2] += stepSize)
                   {
-                    typename OcTreeType::NodeType* node = octomap->search(key);
+                    typename OcTreeType::NodeType* node = octomap->search(key, treeDepth);
 
                     // the left part evaluates to 1 for free voxels and 2 for occupied voxels
                     if (!(node && ((((int)octomap->isNodeOccupied(node)) + 1) & render_mode_mask)))
@@ -574,7 +582,6 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
             ++pointCount;
           }
         }
-      }
     }
   }
 

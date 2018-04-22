@@ -293,26 +293,32 @@ void OccupancyGridDisplay::setColor(double z_pos, double min_z, double max_z, do
 
 void OccupancyGridDisplay::updateTreeDepth()
 {
+  updateTopic();
 }
 
 void OccupancyGridDisplay::updateOctreeRenderMode()
 {
+  updateTopic();
 }
 
 void OccupancyGridDisplay::updateOctreeColorMode()
 {
+  updateTopic();
 }
 
 void OccupancyGridDisplay::updateAlpha()
 {
+  updateTopic();
 }
 
 void OccupancyGridDisplay::updateMaxHeight()
 {
+  updateTopic();
 }
 
 void OccupancyGridDisplay::updateMinHeight()
 {
+  updateTopic();
 }
 
 void OccupancyGridDisplay::clear()

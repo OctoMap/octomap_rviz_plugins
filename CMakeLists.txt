@@ -42,7 +42,12 @@ set(SOURCE_FILES
   src/occupancy_map_display.cpp 
 )
 
-add_library(${PROJECT_NAME} MODULE ${SOURCE_FILES})
+set(HEADER_FILES
+  include/octomap_rviz_plugins/occupancy_grid_display.h
+  include/octomap_rviz_plugins/occupancy_map_display.h
+)
+
+add_library(${PROJECT_NAME} MODULE ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC "-Wno-register") # Avoid OGRE deprecaton warnings under C++17
 

@@ -6,6 +6,7 @@
     </description>
 
   <maintainer email="armin@hornung.io">Armin Hornung</maintainer>
+  <maintainer email="w.merkt+oss@gmail.com">Wolfgang Merkt</maintainer>
   
   <url type="website">http://ros.org/wiki/octomap_rviz_plugins</url>
   <url type="bugtracker">https://github.com/OctoMap/octomap_rviz_plugins/issues</url>

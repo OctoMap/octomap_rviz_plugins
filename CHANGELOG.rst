@@ -1,5 +1,5 @@
-Forthcoming
------------
+0.2.1 (2019-07-11)
+------------------
 * Add Wolfgang Merkt to maintainers
 * `Update visualization on property changes with latched topics <https://github.com/OctoMap/octomap_rviz_plugins/issues/32>`_
 * `Update node frame from TF on every frame <https://github.com/OctoMap/octomap_rviz_plugins/issues/31>`_

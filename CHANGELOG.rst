@@ -1,3 +1,8 @@
+Forthcoming
+-----------
+* Add missing Qt5 dependencies `#35 <https://github.com/OctoMap/octomap_rviz_plugins/issues/35>`_
+* Contributors: Wolfgang Merkt
+
 0.2.1 (2019-07-11)
 ------------------
 * Add Wolfgang Merkt to maintainers

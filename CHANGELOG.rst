@@ -1,5 +1,5 @@
-Forthcoming
------------
+0.2.3 (2021-01-17)
+------------------
 * Build plugin-lib as module (`#36 <https://github.com/OctoMap/octomap_rviz_plugins/issues/36>`_)
 * Add GitHub Actions CI, address warnings for ROS Noetic (`#39 <https://github.com/OctoMap/octomap_rviz_plugins/issues/39>`_)
 * Contributors: Sebastian Kasperski, Wolfgang Merkt

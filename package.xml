@@ -1,13 +1,13 @@
-<package>
+<package format="3">
   <name>octomap_rviz_plugins</name>
   <version>0.2.2</version>
-    <description>
+  <description>
      A set of plugins for displaying occupancy information decoded from binary octomap messages. 
-    </description>
+  </description>
 
   <maintainer email="armin@hornung.io">Armin Hornung</maintainer>
-  <maintainer email="w.merkt+oss@gmail.com">Wolfgang Merkt</maintainer>
-  
+  <maintainer email="opensource@wolfgangmerkt.com">Wolfgang Merkt</maintainer>
+
   <url type="website">http://ros.org/wiki/octomap_rviz_plugins</url>
   <url type="bugtracker">https://github.com/OctoMap/octomap_rviz_plugins/issues</url>
 
@@ -24,17 +24,16 @@
   <build_depend>qtbase5-dev</build_depend>
   <build_depend>libqt5-core</build_depend>
   <build_depend>libqt5-widgets</build_depend>
- 
-  <run_depend>octomap_msgs</run_depend>
-  <run_depend>octomap</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>rviz</run_depend>
-  <run_depend>qtbase5-dev</run_depend>
-  <run_depend>libqt5-core</run_depend>
-  <run_depend>libqt5-widgets</run_depend>
+
+  <exec_depend>octomap_msgs</exec_depend>
+  <exec_depend>octomap</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>qtbase5-dev</exec_depend>
+  <exec_depend>libqt5-core</exec_depend>
+  <exec_depend>libqt5-widgets</exec_depend>
 
   <export>
     <rviz plugin="${prefix}/plugin_description.xml"/>
   </export>
-
 </package>

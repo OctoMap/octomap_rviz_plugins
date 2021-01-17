@@ -1,3 +1,9 @@
+Forthcoming
+-----------
+* Build plugin-lib as module (`#36 <https://github.com/OctoMap/octomap_rviz_plugins/issues/36>`_)
+* Add GitHub Actions CI, address warnings for ROS Noetic (`#39 <https://github.com/OctoMap/octomap_rviz_plugins/issues/39>`_)
+* Contributors: Sebastian Kasperski, Wolfgang Merkt
+
 0.2.2 (2019-07-16)
 ------------------
 * Add missing Qt5 dependencies `#35 <https://github.com/OctoMap/octomap_rviz_plugins/issues/35>`_

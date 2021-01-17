@@ -13,6 +13,8 @@ find_package(Boost REQUIRED COMPONENTS thread )
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 set(QT_LIBRARIES Qt5::Widgets)
 
+set(CMAKE_AUTOMOC ON)
+
 add_definitions(-DQT_NO_KEYWORDS)
 
 catkin_package(
@@ -35,19 +37,17 @@ link_directories(${catkin_LIBRARY_DIRS}
                  ${OCTOMAP_LIBRARY_DIRS}) 
 
 
-QT5_WRAP_CPP(MOC_FILES
-  include/octomap_rviz_plugins/occupancy_grid_display.h
-  include/octomap_rviz_plugins/occupancy_map_display.h
-  OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED -DBOOST_LEXICAL_CAST_INCLUDED 
-)
-
 set(SOURCE_FILES
   src/occupancy_grid_display.cpp
-  src/occupancy_map_display.cpp
-  ${MOC_FILES} 
+  src/occupancy_map_display.cpp 
 )
 
-add_library(${PROJECT_NAME} MODULE ${SOURCE_FILES})
+set(HEADER_FILES
+  include/octomap_rviz_plugins/occupancy_grid_display.h
+  include/octomap_rviz_plugins/occupancy_map_display.h
+)
+
+add_library(${PROJECT_NAME} MODULE ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME} PUBLIC "-Wno-register") # Avoid OGRE deprecaton warnings under C++17
 

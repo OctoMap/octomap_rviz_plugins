@@ -38,9 +38,6 @@
 
 #include <octomap_rviz_plugins/occupancy_grid_display.hpp> // NOLINT
 
-#include <OGRE/OgreSceneNode.h> // NOLINT
-#include <OGRE/OgreSceneManager.h> // NOLINT
-
 #include "rviz_common/visualization_manager.hpp"
 #include "rviz_common/properties/int_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"

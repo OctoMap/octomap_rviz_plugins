@@ -1,68 +1,58 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5z)
 project(octomap_rviz_plugins)
 
-find_package(catkin REQUIRED COMPONENTS octomap_msgs
-                                        roscpp
-                                        rviz
-                                        
-)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-find_package(octomap REQUIRED)
-find_package(Boost REQUIRED COMPONENTS thread )
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-set(QT_LIBRARIES Qt5::Widgets)
-
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
 set(CMAKE_AUTOMOC ON)
 
-add_definitions(-DQT_NO_KEYWORDS)
-
-catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS octomap_msgs
-                   roscpp
-                   rviz
-    DEPENDS OCTOMAP
+set(octomap_rviz_plugins_headers_to_moc
+  include/octomap_rviz_plugins/occupancy_grid_display.hpp
+  include/octomap_rviz_plugins/occupancy_map_display.hpp
 )
-                                        
 
-include_directories(include 
-                    ${catkin_INCLUDE_DIRS} 
-                    ${Boost_INCLUDE_DIRS} 
-                    ${OCTOMAP_INCLUDE_DIRS})
+foreach(header "${octomap_rviz_plugins_headers_to_moc}")
+  qt5_wrap_cpp(octomap_rviz_plugins_moc_files "${header}")
+endforeach()
 
-link_directories(${catkin_LIBRARY_DIRS}
-                 ${Boost_LIBRARY_DIRS}
-                 ${OCTOMAP_LIBRARY_DIRS}) 
-
-
-set(SOURCE_FILES
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  ${octomap_rviz_plugins_moc_files}
   src/occupancy_grid_display.cpp
-  src/occupancy_map_display.cpp 
+  src/occupancy_map_display.cpp
 )
 
-set(HEADER_FILES
-  include/octomap_rviz_plugins/occupancy_grid_display.h
-  include/octomap_rviz_plugins/occupancy_map_display.h
+target_link_libraries(${PROJECT_NAME}
+  Qt5::Widgets
+  ${OCTOMAP_LIBRARIES}
 )
 
-add_library(${PROJECT_NAME} MODULE ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES})
-target_compile_options(${PROJECT_NAME} PUBLIC "-Wno-register") # Avoid OGRE deprecaton warnings under C++17
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${Qt5Widgets_INCLUDE_DIRS}
 )
 
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "OCTOMAP_RVIZ_PLUGINS_BUILDING_LIBRARY")
 
-install(FILES plugin_description.xml
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+    icons
 )
 
 

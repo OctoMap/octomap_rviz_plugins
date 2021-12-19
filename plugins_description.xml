@@ -1,0 +1,44 @@
+
+<library path="octomap_rviz_plugins">
+  <class name="octomap_rviz_plugins/OccupancyGrid"
+         type="octomap_rviz_plugins::OcTreeGridDisplay"
+         base_class_type="rviz_common::Display">
+    <description>
+      Displays 3D occupancy grids generated from compressed octomap messages.
+    </description>
+    <message_type>octomap_msgs/msg/Octomap</message_type>
+  </class>
+  <class name="octomap_rviz_plugins/ColorOccupancyGrid"
+         type="octomap_rviz_plugins::ColorOcTreeGridDisplay"
+         base_class_type="rviz_common::Display">
+    <description>
+      Displays 3D occupancy grids generated from compressed color octomap messages.
+    </description>
+    <message_type>octomap_msgs/msg/Octomap</message_type>
+  </class>
+  <class name="octomap_rviz_plugins/OccupancyGridStamped"
+         type="octomap_rviz_plugins::OcTreeStampedGridDisplay"
+         base_class_type="rviz_common::Display">
+    <description>
+      Displays 3D occupancy grids generated from compressed octomap messages.
+    </description>
+    <message_type>octomap_msgs/msg/Octomap</message_type>
+  </class>
+
+  <class name="octomap_rviz_plugins/OccupancyMap"
+	     type="octomap_rviz_plugins::OcTreeMapDisplay"
+	     base_class_type="rviz_common::Display">
+    <description>
+      Displays projected 2D occupancy maps generated from compressed octomap messages.
+    </description>
+    <message_type>octomap_msgs/msg/Octomap</message_type>
+  </class>
+  <class name="octomap_rviz_plugins/OccupancyMapStamped"
+	     type="octomap_rviz_plugins::OcTreeStampedMapDisplay"
+	     base_class_type="rviz_common::Display">
+    <description>
+      Displays projected 2D occupancy maps generated from compressed octomap messages.
+    </description>
+    <message_type>octomap_msgs/msg/Octomap</message_type>
+  </class>
+</library>

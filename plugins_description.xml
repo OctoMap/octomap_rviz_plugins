@@ -1,4 +1,3 @@
-
 <library path="octomap_rviz_plugins">
   <class name="octomap_rviz_plugins/OccupancyGrid"
          type="octomap_rviz_plugins::OcTreeGridDisplay"

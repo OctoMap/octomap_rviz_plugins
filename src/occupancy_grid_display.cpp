@@ -65,7 +65,7 @@ enum OctreeVoxelColorMode
 {
   OCTOMAP_CELL_COLOR,
   OCTOMAP_Z_AXIS_COLOR,
-  OCTOMAP_PROBABLILTY_COLOR,
+  OCTOMAP_PROBABILITY_COLOR,
 };
 
 OccupancyGridDisplay::OccupancyGridDisplay()
@@ -88,7 +88,7 @@ OccupancyGridDisplay::OccupancyGridDisplay()
 
   octree_coloring_property_->addOption("Cell Color", OCTOMAP_CELL_COLOR);
   octree_coloring_property_->addOption("Z-Axis", OCTOMAP_Z_AXIS_COLOR);
-  octree_coloring_property_->addOption("Cell Probability", OCTOMAP_PROBABLILTY_COLOR);
+  octree_coloring_property_->addOption("Cell Probability", OCTOMAP_PROBABILITY_COLOR);
   alpha_property_ = new rviz_common::properties::FloatProperty(
     "Voxel Alpha", 1.0, "Set voxel transparency alpha",
     this,
@@ -320,7 +320,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::setVoxelColor(
     case OCTOMAP_Z_AXIS_COLOR:
       setColor(new_point.position.z, min_z, max_z, color_factor_, new_point);
       break;
-    case OCTOMAP_PROBABLILTY_COLOR:
+    case OCTOMAP_PROBABILITY_COLOR:
       cell_probability = node.getOccupancy();
       new_point.setColor((1.0f - cell_probability), cell_probability, 0.0);
       break;
@@ -350,7 +350,7 @@ void TemplatedOccupancyGridDisplay<octomap::ColorOcTree>::setVoxelColor(
     case OCTOMAP_Z_AXIS_COLOR:
       setColor(new_point.position.z, min_z, max_z, color_factor_, new_point);
       break;
-    case OCTOMAP_PROBABLILTY_COLOR:
+    case OCTOMAP_PROBABILITY_COLOR:
       cell_probability = node.getOccupancy();
       new_point.setColor((1.0f - cell_probability), cell_probability, 0.0);
       break;

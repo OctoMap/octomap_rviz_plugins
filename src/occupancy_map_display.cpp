@@ -235,6 +235,7 @@ void OccupancyMapDisplay::subscribeToUpdateTopic()
 {
   try {
     rclcpp::SubscriptionOptions sub_opts;
+#ifndef FOXY
     sub_opts.event_callbacks.message_lost_callback =
       [&](rclcpp::QOSMessageLostInfo & info)
       {
@@ -246,6 +247,7 @@ void OccupancyMapDisplay::subscribeToUpdateTopic()
           rviz_common::properties::StatusProperty::Warn, "Update Topic",
           QString(sstm.str().c_str()));
       };
+#endif
 
     update_subscription_ =
       rviz_ros_node_.lock()->get_raw_node()->

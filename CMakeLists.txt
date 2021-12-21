@@ -43,6 +43,14 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 target_compile_definitions(${PROJECT_NAME} PRIVATE "OCTOMAP_RVIZ_PLUGINS_BUILDING_LIBRARY")
 
+# Check version of rclcpp to switch between features (message_lost_callback):
+#  - Foxy is on rclcpp 2.x
+#  - Galactic is on rclcpp 9.x
+#  - Rolling (currently) is on rclcpp 14.x
+if(${rclcpp_VERSION_MAJOR} VERSION_LESS "3.0.0")
+  target_compile_definitions(${PROJECT_NAME} PRIVATE "FOXY")
+endif()
+
 pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
 
 if(BUILD_TESTING)

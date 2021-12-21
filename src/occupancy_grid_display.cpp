@@ -266,6 +266,12 @@ void OccupancyGridDisplay::reset()
 
 bool OccupancyGridDisplay::updateFromTF()
 {
+  // Check if frame exists to avoid spamming the RViz console output
+  std::string error{};
+  if (context_->getFrameManager()->transformHasProblems(header_.frame_id, error)) {
+    return false;
+  }
+
   // get tf transform
   Ogre::Vector3 pos;
   Ogre::Quaternion orient;

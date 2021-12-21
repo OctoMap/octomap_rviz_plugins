@@ -1,3 +1,8 @@
+Forthcoming
+-----------
+* ROS2 Migration (`#41 <https://github.com/OctoMap/octomap_rviz_plugins/issues/41>`_)
+* Contributors: Daisuke Nishimatsu, Wolfgang Merkt
+
 0.2.4 (2021-12-21)
 ------------------
 * Use automoc feature of CMake (`#34 <https://github.com/OctoMap/octomap_rviz_plugins/issues/34>`_)

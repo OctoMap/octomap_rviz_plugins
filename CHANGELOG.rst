@@ -1,3 +1,8 @@
+Forthcoming
+-----------
+* Use automoc feature of CMake (`#34 <https://github.com/OctoMap/octomap_rviz_plugins/issues/34>`_)
+* Contributors: Simon Schmeisser (isys vision), Wolfgang Merkt
+
 0.2.3 (2021-01-17)
 ------------------
 * Build plugin-lib as module (`#36 <https://github.com/OctoMap/octomap_rviz_plugins/issues/36>`_)

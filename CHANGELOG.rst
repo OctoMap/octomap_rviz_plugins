@@ -1,5 +1,5 @@
-Forthcoming
------------
+2.0.0 (2021-12-21)
+------------------
 * ROS2 Migration (`#41 <https://github.com/OctoMap/octomap_rviz_plugins/issues/41>`_)
 * Contributors: Daisuke Nishimatsu, Wolfgang Merkt
 

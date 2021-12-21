@@ -1,5 +1,5 @@
-Forthcoming
------------
+0.2.4 (2021-12-21)
+------------------
 * Use automoc feature of CMake (`#34 <https://github.com/OctoMap/octomap_rviz_plugins/issues/34>`_)
 * Contributors: Simon Schmeisser (isys vision), Wolfgang Merkt
 

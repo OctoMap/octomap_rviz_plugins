@@ -216,7 +216,7 @@ void OccupancyGridDisplay::subscribe()
       sub_.reset(new message_filters::Subscriber<octomap_msgs::Octomap>());
 
       sub_->subscribe(threaded_nh_, topicStr, queue_size_);
-      sub_->registerCallback(boost::bind(&OccupancyGridDisplay::incomingMessageCallback, this, _1));
+      sub_->registerCallback(boost::bind(&OccupancyGridDisplay::incomingMessageCallback, this, boost::placeholders::_1));
 
     }
   }

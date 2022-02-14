@@ -106,7 +106,7 @@ void OccupancyMapDisplay::subscribe()
       sub_.reset(new message_filters::Subscriber<octomap_msgs::Octomap>());
 
       sub_->subscribe(threaded_nh_, topicStr, 5);
-      sub_->registerCallback(boost::bind(&OccupancyMapDisplay::handleOctomapBinaryMessage, this, _1));
+      sub_->registerCallback(boost::bind(&OccupancyMapDisplay::handleOctomapBinaryMessage, this, boost::placeholders::_1));
 
     }
   }

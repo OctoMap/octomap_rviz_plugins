@@ -616,7 +616,7 @@ void TemplatedOccupancyGridDisplay<OcTreeType>::incomingMessageCallback(const oc
 
 } // namespace octomap_rviz_plugin
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
 typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::OcTree> OcTreeGridDisplay;
 typedef octomap_rviz_plugin::TemplatedOccupancyGridDisplay<octomap::ColorOcTree> ColorOcTreeGridDisplay;

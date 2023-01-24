@@ -1,5 +1,5 @@
 
-<library path="lib/liboctomap_rviz_plugins">
+<library path="liboctomap_rviz_plugins">
   <class name="octomap_rviz_plugin/OccupancyGrid"
          type="OcTreeGridDisplay"
          base_class_type="rviz::Display">

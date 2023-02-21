@@ -140,6 +140,15 @@ OccupancyGridDisplay::OccupancyGridDisplay() :
                                            "Defines the minimum height to display",
                                            this,
                                            SLOT (updateMinHeight() ));
+
+  style_property_ = new EnumProperty( "Style", "Boxes",
+                                      "Rendering mode to use, in order of computational complexity.",
+                                      this, SLOT( updateStyle() ));
+  style_property_->addOption( "Points", PointCloud::RM_POINTS );
+  style_property_->addOption( "Squares", PointCloud::RM_SQUARES );
+  style_property_->addOption( "Flat Squares", PointCloud::RM_FLAT_SQUARES );
+  style_property_->addOption( "Spheres", PointCloud::RM_SPHERES );
+  style_property_->addOption( "Boxes", PointCloud::RM_BOXES );
 }
 
 void OccupancyGridDisplay::onInitialize()
@@ -157,7 +166,7 @@ void OccupancyGridDisplay::onInitialize()
     sname << "PointCloud Nr." << i;
     cloud_[i] = new rviz::PointCloud();
     cloud_[i]->setName(sname.str());
-    cloud_[i]->setRenderMode(rviz::PointCloud::RM_BOXES);
+    cloud_[i]->setRenderMode(static_cast<PointCloud::RenderMode>(style_property_->getOptionInt()));
     scene_node_->attachObject(cloud_[i]);
   }
 }
@@ -319,6 +328,14 @@ void OccupancyGridDisplay::updateMaxHeight()
 void OccupancyGridDisplay::updateMinHeight()
 {
   updateTopic();
+}
+
+void OccupancyGridDisplay::updateStyle()
+{
+  for (std::size_t i = 0; i < max_octree_depth_; ++i)
+  {
+    cloud_[i]->setRenderMode(static_cast<PointCloud::RenderMode>(style_property_->getOptionInt()));
+  }
 }
 
 void OccupancyGridDisplay::clear()

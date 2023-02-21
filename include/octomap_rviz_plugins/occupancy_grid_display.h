@@ -82,6 +82,7 @@ private Q_SLOTS:
   void updateAlpha();
   void updateMaxHeight();
   void updateMinHeight();
+  void updateStyle();
 
 protected:
   // overrides from Display
@@ -121,6 +122,7 @@ protected:
   rviz::RosTopicProperty* octomap_topic_property_;
   rviz::EnumProperty* octree_render_property_;
   rviz::EnumProperty* octree_coloring_property_;
+  rviz::EnumProperty* style_property_;
   rviz::IntProperty* tree_depth_property_;
   rviz::FloatProperty* alpha_property_;
   rviz::FloatProperty* max_height_property_;

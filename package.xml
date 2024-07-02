@@ -21,7 +21,7 @@
   <depend>libqt5-gui</depend>
   <depend>libqt5-widgets</depend>
   <depend>octomap_msgs</depend>
-  <depend>octomap</depend>
+  <depend>liboctomap-dev</depend>
   <depend>qtbase5-dev</depend>
   <depend>rclcpp</depend>
   <depend>rviz_common</depend>

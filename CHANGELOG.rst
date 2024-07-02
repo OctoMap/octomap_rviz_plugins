@@ -1,3 +1,8 @@
+Forthcoming
+-----------
+* Switch to the system-provided version of octomap (`#46 <https://github.com/OctoMap/octomap_rviz_plugins/issues/46>`_)
+* Contributors: Chris Lalancette
+
 2.0.0 (2021-12-21)
 ------------------
 * ROS2 Migration (`#41 <https://github.com/OctoMap/octomap_rviz_plugins/issues/41>`_)

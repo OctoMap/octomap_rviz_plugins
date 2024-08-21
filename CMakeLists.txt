@@ -33,7 +33,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 
 target_link_libraries(${PROJECT_NAME}
   Qt5::Widgets
-  ${OCTOMAP_LIBRARIES}
+  octomap
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

@@ -1,3 +1,8 @@
+Forthcoming
+-----------
+* Fix linkage to octomap (`#49 <https://github.com/OctoMap/octomap_rviz_plugins/issues/49>`_)
+* Contributors: Mike Wake
+
 2.1.0 (2024-07-02)
 ------------------
 * Switch to the system-provided version of octomap (`#46 <https://github.com/OctoMap/octomap_rviz_plugins/issues/46>`_)

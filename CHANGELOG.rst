@@ -1,5 +1,5 @@
-Forthcoming
------------
+2.1.1 (2024-10-19)
+------------------
 * Fix linkage to octomap (`#49 <https://github.com/OctoMap/octomap_rviz_plugins/issues/49>`_)
 * Contributors: Mike Wake
 

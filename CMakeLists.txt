@@ -13,6 +13,10 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+# octomap is listed as liboctomap-dev on package.xml, so ament_auto_find_build_dependencies
+# can't find it, let's find it explicitly
+find_package(octomap REQUIRED)
+
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 set(CMAKE_AUTOMOC ON)
 

@@ -16,6 +16,11 @@ ament_auto_find_build_dependencies()
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 set(CMAKE_AUTOMOC ON)
 
+# liboctomap-dev is listed in the package.xml, but the CMake package name is octomap,
+# so we need to find it explicitly as ament_auto_find_build_dependencies just tries to find
+# it as liboctomap-dev (without finding anything)
+find_package(octomap REQUIRED)
+
 set(octomap_rviz_plugins_headers_to_moc
   include/octomap_rviz_plugins/occupancy_grid_display.hpp
   include/octomap_rviz_plugins/occupancy_map_display.hpp

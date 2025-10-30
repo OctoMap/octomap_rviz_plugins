@@ -5,7 +5,6 @@
      A set of plugins for displaying occupancy information decoded from binary octomap messages.
   </description>
 
-  <maintainer email="armin@hornung.io">Armin Hornung</maintainer>
   <maintainer email="opensource@wolfgangmerkt.com">Wolfgang Merkt</maintainer>
 
   <url type="website">http://ros.org/wiki/octomap_rviz_plugins</url>

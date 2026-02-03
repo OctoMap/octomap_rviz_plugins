@@ -13,7 +13,14 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+if(${QT_VERSION} VERSION_LESS 5.15.0)
+  function(qt_wrap_cpp out)
+    qt5_wrap_cpp(_sources ${ARGN})
+    set("${out}" ${_sources} PARENT_SCOPE)
+  endfunction()
+endif()
 set(CMAKE_AUTOMOC ON)
 
 # liboctomap-dev is listed in the package.xml, but the CMake package name is octomap,
@@ -27,7 +34,7 @@ set(octomap_rviz_plugins_headers_to_moc
 )
 
 foreach(header "${octomap_rviz_plugins_headers_to_moc}")
-  qt5_wrap_cpp(octomap_rviz_plugins_moc_files "${header}")
+  qt_wrap_cpp(octomap_rviz_plugins_moc_files "${header}")
 endforeach()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -37,12 +44,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 target_link_libraries(${PROJECT_NAME}
-  Qt5::Widgets
+  Qt${QT_VERSION_MAJOR}::Widgets
   octomap
-)
-
-target_include_directories(${PROJECT_NAME} PUBLIC
-  ${Qt5Widgets_INCLUDE_DIRS}
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")

@@ -1,5 +1,5 @@
-Forthcoming
------------
+2.2.0 (2026-02-04)
+------------------
 * Update package.xml
   Remove maintainer
 * Merge pull request `#50 <https://github.com/OctoMap/octomap_rviz_plugins/issues/50>`_ from traversaro/patch-1

@@ -12,27 +12,32 @@ jobs:
       fail-fast: false
       matrix:
         ros_distribution:
-          - foxy
-          - galactic
+          - humble
+          - jazzy
+          - kilted
           - rolling
         include:
-          # Foxy Fitzroy (June 2020 - May 2023)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
-            ros_distribution: foxy
+          # Humble Hawksbill (May 2022 - May 2027)
+          - docker_image: ghcr.io/sloretz/ros:humble-ros-base
+            ros_distribution: humble
             ros_version: 2
-          # Galactic Geochelone (May 2021 - November 2022)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
-            ros_distribution: galactic
+          # Jazzy Jalisco (May 2024 - May 2029)
+          - docker_image: ghcr.io/sloretz/ros:jazzy-ros-base
+            ros_distribution: jazzy
+            ros_version: 2
+          # Kilted Kaiju (May 2025 - December 2026)
+          - docker_image: ghcr.io/sloretz/ros:kilted-ros-base
+            ros_distribution: kilted
             ros_version: 2
           # Rolling Ridley  (June 2020 - Present)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+          - docker_image: ghcr.io/sloretz/ros:rolling-ros-base 
             ros_distribution: rolling
             ros_version: 2
     container:
       image: ${{ matrix.docker_image }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
@@ -41,12 +46,12 @@ jobs:
         run: |
           echo ::set-output name=package_list::$(colcon list --names-only)
       - name: Setup ROS environment
-        uses: ros-tooling/setup-ros@v0.2
+        uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
       - name: build and test
-        uses: ros-tooling/action-ros-ci@v0.2
+        uses: ros-tooling/action-ros-ci@v0.4
         with:
           package-name: ${{ steps.list_packages.outputs.package_list }}
           target-ros2-distro: ${{ matrix.ros_distribution }}

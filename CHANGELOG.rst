@@ -1,3 +1,12 @@
+Forthcoming
+-----------
+* Update package.xml
+  Remove maintainer
+* Merge pull request `#50 <https://github.com/OctoMap/octomap_rviz_plugins/issues/50>`_ from traversaro/patch-1
+  [ros2] Actully search for octomap in CMakeLists.txt
+* Actully search for octomap in CMakeLists.txt
+* Contributors: Armin Hornung, Silvio Traversaro
+
 2.1.1 (2024-10-19)
 ------------------
 * Fix linkage to octomap (`#49 <https://github.com/OctoMap/octomap_rviz_plugins/issues/49>`_)

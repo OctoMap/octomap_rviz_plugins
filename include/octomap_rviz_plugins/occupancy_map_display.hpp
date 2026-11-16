@@ -30,6 +30,7 @@
 #ifndef OCTOMAP_RVIZ_PLUGINS__OCCUPANCY_MAP_DISPLAY_HPP_
 #define OCTOMAP_RVIZ_PLUGINS__OCCUPANCY_MAP_DISPLAY_HPP_
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -99,6 +100,12 @@ class OccupancyMapDisplay : public
   Q_OBJECT
 
 public:
+#ifdef RVIZ_COMMON_CHRONO_UPDATE
+  using Duration = std::chrono::nanoseconds;
+#else
+  using Duration = float;
+#endif
+
   // TODO(botteroa-si): Constructor for testing, remove once ros_nodes can be mocked and call
   // initialize() instead
   explicit OccupancyMapDisplay(rviz_common::DisplayContext * context);
@@ -131,7 +138,7 @@ protected Q_SLOTS:
 
 protected:
   void updateTopic() override;
-  void update(float wall_dt, float ros_dt) override;
+  void update(Duration wall_dt, Duration ros_dt) override;
 
   void subscribe() override;
   void unsubscribe() override;

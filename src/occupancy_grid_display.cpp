@@ -29,12 +29,15 @@
 // Author: Julius Kammerl (jkammerl@willowgarage.com)
 
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <memory>
 #include <string>
 #include <sstream>
 
 #include <QObject>  // NOLINT
+
+#include <OgreSceneNode.h>
 
 #include <octomap_rviz_plugins/occupancy_grid_display.hpp> // NOLINT
 
@@ -237,7 +240,7 @@ void OccupancyGridDisplay::clear()
 }
 
 void OccupancyGridDisplay::update(
-  [[maybe_unused]] float wall_dt, [[maybe_unused]] float ros_dt)
+  [[maybe_unused]] Duration wall_dt, [[maybe_unused]] Duration ros_dt)
 {
   if (new_points_received_) {
     std::unique_lock<std::mutex> lock(mutex_);

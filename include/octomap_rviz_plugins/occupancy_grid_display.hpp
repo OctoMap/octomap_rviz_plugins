@@ -33,6 +33,7 @@
 
 #ifndef Q_MOC_RUN
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -64,11 +65,17 @@ class OccupancyGridDisplay
   Q_OBJECT
 
 public:
+#ifdef RVIZ_COMMON_CHRONO_UPDATE
+  using Duration = std::chrono::nanoseconds;
+#else
+  using Duration = float;
+#endif
+
   OccupancyGridDisplay();
 
   // Overrides from Display
   void onInitialize() override;
-  void update(float wall_dt, float ros_dt) override;
+  void update(Duration wall_dt, Duration ros_dt) override;
   void reset() override;
 
 private Q_SLOTS:

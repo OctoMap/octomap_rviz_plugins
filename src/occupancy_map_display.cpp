@@ -645,7 +645,7 @@ void OccupancyMapDisplay::reset()
   clear();
 }
 
-void OccupancyMapDisplay::update(float wall_dt, float ros_dt)
+void OccupancyMapDisplay::update(Duration wall_dt, Duration ros_dt)
 {
   (void) wall_dt;
   (void) ros_dt;

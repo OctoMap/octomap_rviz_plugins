@@ -59,6 +59,10 @@ if(${rclcpp_VERSION_MAJOR} VERSION_LESS "3.0.0")
   target_compile_definitions(${PROJECT_NAME} PRIVATE "FOXY")
 endif()
 
+if(rviz_common_VERSION VERSION_GREATER_EQUAL 15.1.7)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC "RVIZ_COMMON_CHRONO_UPDATE")
+endif()
+
 pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
 
 if(BUILD_TESTING)
